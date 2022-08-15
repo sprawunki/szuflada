@@ -1,0 +1,25 @@
+{
+  "short_name": "Szuflada",
+  "name": "Szuflada",
+  "start_url": "/szuflada/",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "background_color": "#007F7F",
+  "display": "standalone",
+  "scope": "/szuflada/",
+  "theme_color": "#007F7F",
+  "description": "Szuflada is here to store your bookmarks",
+  "share_target": {
+    "action": "/szuflada/",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
+}

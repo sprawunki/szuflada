@@ -1,8 +1,11 @@
 <script lang="ts">
   import { remoteStorage } from '$lib/remotestorage'
+  import { v5 as uuidv5 } from 'uuid'
+
+  const NS_BOOKMARK = uuidv5("https://szuflada.app/bookmark/", uuidv5.URL);
 
   const parsedUrl = new URL(window.location);
-  let webpage;
+  let bookmark;
 
   const title = parsedUrl.searchParams.get('title');
   const text = parsedUrl.searchParams.get('text');
@@ -19,18 +22,23 @@
   url = getUrlFromCandidate(url) || getUrlFromCandidate(text)
 
   if (url) {
-    webpage = {
-      "@context": "http://schema.org/WebPage",
-      "http://schema.org/name": [{
+    bookmark = {
+      "@id": `urn:uuid:${uuidv5(url, NS_BOOKMARK)}`,
+      "@type": "http://www.w3.org/2002/01/bookmark#Bookmark",
+      "http://purl.org/dc/elements/1.1/#created": new Date().toISOString(),
+      "http://purl.org/dc/elements/1.1/#date": new Date().toISOString(),
+      "http://www.w3.org/2002/01/bookmark#title": [{
         "@value": title,
       }],
-      "http://schema.org/url": url
+      "http://www.w3.org/2002/01/bookmark#recalls": {
+        "@id": url
+      }
     }
 
-    remoteStorage['szuflada.app/WebPage'].save(webpage)
+    remoteStorage['szuflada.app/bookmark'].save(bookmark)
   }
 </script>
 
 <div class="webpage">
-  <pre>{JSON.stringify(webpage, null, 2)}</pre>
+  <!-- <pre>{JSON.stringify(bookmark, null, 2)}</pre> -->
 </div>

@@ -9,7 +9,7 @@ const config = {
 
 	kit: {
 		paths: {
-			base: "/szuflada"
+			base: "/szuflada",
 		},
 		adapter: adapter({
 			pages: 'build',

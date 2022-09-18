@@ -1,5 +1,5 @@
 import RemoteStorage from 'remotestoragejs'
-import WebPage from '$lib/remotestorage/WebPage'
+import Bookmark from '$lib/remotestorage/Bookmark'
 
 type RemoteStorageInstance = {
   [key: string]: any
@@ -13,13 +13,13 @@ export const remoteStorage: RemoteStorageInstance = new RemoteStorage({
     remote:   true,
     conflict: true
   },
-  modules: [WebPage]
+  modules: [Bookmark]
 });
 
 remoteStorage.access.claim('szuflada.app', 'rw');
 
 remoteStorage.on('connected', function() {
-  console.debug("RS connected")
+  remoteStorage['szuflada.app/bookmark'].getList()
 })
 
 remoteStorage.on('error', function() {

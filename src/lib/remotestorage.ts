@@ -19,7 +19,7 @@ export const remoteStorage: RemoteStorageInstance = new RemoteStorage({
 remoteStorage.access.claim('szuflada.app', 'rw');
 
 remoteStorage.on('connected', function() {
-  remoteStorage['szuflada.app/bookmark'].getList()
+  remoteStorage['szuflada.app/bookmark'].getAll()
 })
 
 remoteStorage.on('error', function() {

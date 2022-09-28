@@ -1,7 +1,7 @@
 import RemoteStorage from 'remotestoragejs'
 import BookmarkSchema from '$lib/remotestorage/schema/Bookmark'
 import { v5 as uuidv5 } from 'uuid'
-
+import * as jsonld from 'jsonld'
 import { bookmarks } from '$lib/store'
 
 const Bookmark = {
@@ -10,14 +10,35 @@ const Bookmark = {
     privateClient.declareType('Bookmark', BookmarkSchema);
 
     privateClient.on('change', (event) => {
-      console.debug(event)
-
       if (!event.newValue && event.oldValue['@id']) {
         bookmarks.update(items => { delete items[event.oldValue['@id']]; return items })
       }
 
       if (event.newValue) {
-        bookmarks.update(items => { items[event.newValue['@id']] = event.newValue; return items })
+        delete event.newValue['@context']
+
+        jsonld.frame(
+          event.newValue,
+          {
+            "http://www.w3.org/2002/01/bookmark#recalls": {},
+            "http://www.w3.org/2002/01/bookmark#title": {},
+            "http://purl.org/dc/elements/1.1/#created": {},
+            "@explicit": true,
+          }
+        )
+        .then(graph => jsonld.compact(
+          graph,
+          {
+            "@context": {
+              "created": "http://purl.org/dc/elements/1.1/#created",
+              "title": "http://www.w3.org/2002/01/bookmark#title",
+              "recalls": "http://www.w3.org/2002/01/bookmark#recalls"
+            }
+          }
+        ))
+        .then(graph => {
+          bookmarks.update(items => { items[graph['@id']] = graph; return items })
+        })
       }
     })
 
@@ -48,11 +69,7 @@ const Bookmark = {
         delete: (uuid: any) => privateClient.remove(
           `${uuid}`
         ),
-        getList: () => {
-          return privateClient.getListing("/")
-            .then(listing => Object.keys(listing))
-            .then(uuids => uuids.forEach(uuid => privateClient.getObject(uuid)))
-        }
+        getAll: () => privateClient.getAll("/")
       }
     }
   }

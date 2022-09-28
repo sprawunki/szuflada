@@ -9,16 +9,16 @@
   {#each $bookmarkList as bookmark}
   <li class="bookmark">
     <div class="bookmark__title">
-      {bookmark['http://www.w3.org/2002/01/bookmark#title'][0]['@value']}
+      {bookmark.title}
     </div>
     <dl class="bookmark__meta">
       <dt>created</dt>
-      <dd>{moment(bookmark['http://purl.org/dc/elements/1.1/#created']).fromNow()}</dd>
+      <dd title="{moment(bookmark.created).calendar()}">{moment(bookmark.created).fromNow()}</dd>
     </dl>
     <ul class="bookmark__actions">
       <li class="action">
-        <a class="action__visit" target="_blank" rel="noreferrer noopener" href={bookmark['http://www.w3.org/2002/01/bookmark#recalls']['@id']}>
-          {bookmark['http://www.w3.org/2002/01/bookmark#recalls']['@id']}
+        <a class="action__visit" target="_blank" rel="noreferrer noopener" href={bookmark.recalls['@id']}>
+          {bookmark.recalls['@id']}
         </a>
       </li>
     </ul>

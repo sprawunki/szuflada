@@ -6,7 +6,7 @@
 	font-size: 16px;
 	--font-mono: 'Fira Mono', monospace;
 	--pure-white: #ffffff;
-	--primary-color: #eeeeee;
+	--primary-color: #ddd;
 	--secondary-color: #d0dde9;
 	--tertiary-color: #edf0f8;
 	--accent-color: #003eff;
@@ -24,24 +24,9 @@ body {
 	color: var(--text-color);
 }
 
-body::before {
-	content: '';
-	width: 80vw;
-	height: 100vh;
-	position: absolute;
-	top: 0;
-	left: 10vw;
-	z-index: -1;
-	background: radial-gradient(
-		50% 50% at 50% 50%,
-		var(--pure-white) 0%,
-		rgba(255, 255, 255, 0) 100%
-	);
-	opacity: 0.05;
-}
-
 #svelte {
 	min-height: 100vh;
+	width: 100%;
 	display: flex;
 	flex-direction: column;
 }
@@ -94,6 +79,14 @@ button {
 
 button:focus:not(:focus-visible) {
 	outline: none;
+}
+
+.container {
+	width: 740px;
+	max-width: 100%;
+	box-sizing: border-box;
+	margin: 0 auto;
+	padding: 0 0.5rem;
 }
 
 @media (min-width: 720px) {

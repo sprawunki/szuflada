@@ -15,17 +15,11 @@
 
 		const bookmarks = await import('$lib/Bookmarks.svelte');
 		Bookmarks = bookmarks.default;
-
-		const remotestorage = await import('$lib/RemoteStorage.svelte');
-		RemoteStorage = remotestorage.default;
 	});
 </script>
 
-<section>
-	<svelte:component this={RemoteStorage} />
-	<svelte:component this={WebPage} />
-	<svelte:component this={Bookmarks} />
-</section>
+<svelte:component this={WebPage} />
+<svelte:component this={Bookmarks} />
 
 <style>
 	section {

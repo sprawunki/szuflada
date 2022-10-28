@@ -1,16 +1,41 @@
 import RemoteStorage from 'remotestoragejs'
 import BookmarkSchema from '$lib/remotestorage/schema/Bookmark'
 import { v5 as uuidv5 } from 'uuid'
-import * as jsonld from 'jsonld'
+
+import { bookmarks, quadstore } from '$lib/store'
+import {DataFactory} from 'rdf-data-factory';
+const df = new DataFactory();
+
+quadstore.update(quadstore => quadstore.put(
+  df.quad(
+    dataFactory.namedNode('ex://s'),
+    dataFactory.namedNode('ex://p'),
+    dataFactory.namedNode('ex://o'),
+  )
+  const pattern = {graph: df.namedNode('ex://g')};
+  const { items } = await store.get(pattern);
+  console.log(items);
+))
 
 const Bookmark = {
   name: 'szuflada.app/bookmark',
   builder: function(privateClient: any, publicClient: any) {
     privateClient.declareType('Bookmark', BookmarkSchema);
 
+    privateClient.on('change', (event) => {
+      console.debug(event)
+
+      if (!event.newValue && event.oldValue['@id']) {
+        bookmarks.update(items => { delete items[event.oldValue['@id']]; return items })
+      }
+
+      if (event.newValue) {
+        bookmarks.update(items => { items[event.newValue['@id']] = event.newValue; return items })
+      }
+    })
+
     return {
       exports: {
-        getPrivateClient: () => privateClient,
         save: (objectData: any) => {
           return privateClient.getObject(objectData['@id'])
             .then(object => {
@@ -36,8 +61,10 @@ const Bookmark = {
         delete: (uuid: any) => privateClient.remove(
           `${uuid}`
         ),
-        getAll: () => {
-          return privateClient.getAll("/")
+        getList: () => {
+          return privateClient.getListing("/")
+            .then(listing => Object.keys(listing))
+            .then(uuids => uuids.forEach(uuid => privateClient.getObject(uuid)))
         }
       }
     }

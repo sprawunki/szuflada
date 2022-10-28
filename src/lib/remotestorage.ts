@@ -13,14 +13,11 @@ export const remoteStorage: RemoteStorageInstance = new RemoteStorage({
     remote:   true,
     conflict: true
   },
+  cache: true,
   modules: [Bookmark]
 });
 
 remoteStorage.access.claim('szuflada.app', 'rw');
-
-remoteStorage.on('connected', function() {
-  remoteStorage['szuflada.app/bookmark'].getAll()
-})
 
 remoteStorage.on('error', function() {
   remoteStorage.disconnect()
@@ -28,3 +25,5 @@ remoteStorage.on('error', function() {
 
 export const connect = (address: any) => remoteStorage.connect(address)
 export const disconnect = () => remoteStorage.disconnect()
+
+export const getBookmarks = () => remoteStorage['szuflada.app/bookmark'].getAll()

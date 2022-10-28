@@ -1,5 +1,8 @@
 <script lang="ts">
-  import { connect, disconnect, remoteStorage } from '$lib/remotestorage.ts'
+  import { onMount } from 'svelte';
+  import { connect, disconnect, remoteStorage, getBookmarks } from '$lib/remotestorage.ts'
+
+  import { bookmarks } from '$lib/store'
 
   let remote = remoteStorage.remote
 
@@ -21,6 +24,21 @@
   const handleDisconnect = () => {
     disconnect()
   }
+
+  onMount(async () => {
+    const StateWorker = await import('$lib/state.worker?worker')
+    const worker = new StateWorker.default()
+
+    remoteStorage['szuflada.app/bookmark'].getPrivateClient().on('change', (event: any) => {
+      worker.postMessage(event)
+    })
+
+    remoteStorage.on("connected", () => {
+      getBookmarks()
+    })
+
+    worker.onmessage = (event) => bookmarks.set(event.data)
+  })
 </script>
 
 <div>

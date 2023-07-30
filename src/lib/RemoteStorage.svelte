@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { connect, disconnect, remoteStorage, getBookmarks } from '$lib/remotestorage.ts'
+  import { connect, disconnect, remoteStorage, getBookmarks, getTasks } from '$lib/remotestorage.ts'
 
-  import { bookmarks } from '$lib/store'
+  import { bookmarks, tasks } from '$lib/store'
 
   let remote = remoteStorage.remote
 
@@ -33,17 +33,35 @@
       worker.postMessage(event)
     })
 
+    remoteStorage['szuflada.app/task'].getPrivateClient().on('change', (event: any) => {
+      console.log(event)
+      tasks.update(t => {
+        if(event.oldValue && event.oldValue['@id']) {
+          delete t[event.oldValue['@id']];
+        }
+
+        if(event.newValue && event.newValue['@id']) {
+          t[event.newValue['@id']] = event.newValue;
+        }
+
+        console.log("TASKS", t)
+
+        return t;
+      })
+    })
+
     remoteStorage.on("connected", () => {
       getBookmarks()
+      getTasks()
     })
 
     worker.onmessage = (event) => bookmarks.set(event.data)
   })
 </script>
 
-<div>
+<div class="remotestorage">
   {#if remote.connected}
-    <span>{remote.userAddress}</span>
+    <span class="current-user">{remote.userAddress}</span>
     <button on:click={handleDisconnect}>Disconnect</button>
   {:else}
     <form on:submit|preventDefault={handleConnect}>
@@ -52,3 +70,20 @@
     </form>
   {/if}
 </div>
+
+<style>
+  .remotestorage {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    padding: 0 0.25rem;
+    overflow: hidden;
+  }
+
+  .current-user {
+    padding: 0.25rem;
+    hyphens: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+</style>

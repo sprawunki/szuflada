@@ -2,7 +2,7 @@
 	"name": "szuflada",
 	"version": "0.0.1",
 	"scripts": {
-		"dev": "vite dev",
+		"dev": "vite dev --host 0.0.0.0",
 		"build": "vite build",
 		"package": "svelte-kit package",
 		"preview": "vite preview",
@@ -37,6 +37,7 @@
 		"@fontsource/fira-mono": "^4.5.0",
 		"cookie": "^0.4.1",
 		"core-js": "^3.26.0",
+		"graph-data-structure": "^3.3.0",
 		"jsonld": "^8.1.0",
 		"moment": "^2.29.4",
 		"p-queue": "^7.3.0",

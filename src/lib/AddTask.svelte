@@ -18,14 +18,20 @@
 
         newTaskInput.value = '';
     }
+
+    const onSubmit = (event) => {
+        const formData = new FormData(event.target);
+
+        addTask(formData.get("newTask"))
+    }
 </script>
 
 <div class="new-task">
-    <form>
+    <form on:submit|preventDefault={onSubmit}>
         <fieldset>
             <legend>New Note</legend>
-            <input bind:this={newTaskInput} bind:value={summary} type="text" placeholder="ToDo app but with topological sort"/>
-            <button on:click={addTask(summary)}>Add</button>
+            <input id="newTask" name="newTask" bind:this={newTaskInput} bind:value={summary} type="text" placeholder="ToDo app but with topological sort"/>
+            <input type="submit" value="Add" />
         </fieldset>
     </form>
 </div>
@@ -62,7 +68,8 @@
     legend {
         display: none;
     }
-    button {
+    button,
+    input[type=submit] {
         cursor: pointer;
         appearance: none;
         background: #077;

@@ -17,8 +17,8 @@
 <div class="compare-tasks">
   <span>Which should come <em>first</em>?</span>
   <ul class="choice">
-    <li><a href="#" on:click={setOrder($firstUnblockedTask, $taskToComparePriorityTo)}>{$firstUnblockedTask["https://szuflada.app/ns/summary"]}</a></li>
-    <li><a href="#" on:click={setOrder($taskToComparePriorityTo, $firstUnblockedTask)}>{$taskToComparePriorityTo["https://szuflada.app/ns/summary"]}</a></li>
+    <li><a href="#" on:click|preventDefault={setOrder($firstUnblockedTask, $taskToComparePriorityTo)}>{$firstUnblockedTask["https://szuflada.app/ns/summary"]}</a></li>
+    <li><a href="#" on:click|preventDefault={setOrder($taskToComparePriorityTo, $firstUnblockedTask)}>{$taskToComparePriorityTo["https://szuflada.app/ns/summary"]}</a></li>
     <!-- <li><a href="#">Doesn't matter</a></li> -->
   </ul>
 </div>

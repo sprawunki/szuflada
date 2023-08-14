@@ -34,7 +34,6 @@
     })
 
     remoteStorage['szuflada.app/task'].getPrivateClient().on('change', (event: any) => {
-      console.log(event)
       tasks.update(t => {
         if(event.oldValue && event.oldValue['@id']) {
           delete t[event.oldValue['@id']];
@@ -43,8 +42,6 @@
         if(event.newValue && event.newValue['@id']) {
           t[event.newValue['@id']] = event.newValue;
         }
-
-        console.log("TASKS", t)
 
         return t;
       })

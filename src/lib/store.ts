@@ -40,15 +40,16 @@ export const taskList = derived(
     const { links, nodes } = graph.serialize()
 
     return Object.values($tasks)
-      .sort((a, b) => {
-
-        return Math.sign(new Date(a["http://purl.org/dc/elements/1.1/#created"]) - new Date (b["http://purl.org/dc/elements/1.1/#created"]))
-      }
-      )
       .map(task => {
         task.done = task['https://szuflada.app/ns/status'] == 'https://szuflada.app/ns/done';
         task.blocked = links.some(link => task['@id'] == link.target && !isDone($tasks[link.source]));
         return task
+      })
+      .sort((a, b) => Math.sign(
+        new Date(a["http://purl.org/dc/elements/1.1/#created"]) - new Date (b["http://purl.org/dc/elements/1.1/#created"])
+      ))
+      .sort((a, b) => {
+        return Math.sign(2 * (b.done - a.done) + b.blocked - a.blocked);
       })
   }
 )

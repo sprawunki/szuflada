@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { default as moment } from 'moment'
+
   import CompareTasks from '$lib/CompareTasks.svelte';
 
   import { tasks, taskList } from '$lib/store'
@@ -25,6 +27,9 @@
         <label>
             <input type="checkbox" on:change={toggleStatus(task)} checked={$tasks[task["@id"]].done} />
             <span>{task['https://szuflada.app/ns/summary']}</span>
+            {#if task['https://szuflada.app/ns/deadline']}
+                <small>{moment(task['https://szuflada.app/ns/deadline']).fromNow()}</small>
+            {/if}
         </label>
     </div>
   </li>

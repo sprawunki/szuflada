@@ -45,12 +45,9 @@ export const taskList = derived(
         task.blocked = links.some(link => task['@id'] == link.target && !isDone($tasks[link.source]));
         return task
       })
-      .sort((a, b) => Math.sign(
-        new Date(a["http://purl.org/dc/elements/1.1/#created"]) - new Date (b["http://purl.org/dc/elements/1.1/#created"])
-      ))
-      .sort((a, b) => {
-        return Math.sign(2 * (b.done - a.done) + b.blocked - a.blocked);
-      })
+      .sort((a, b) => order.indexOf(a['@id']) - order.indexOf(b['@id']))
+      .sort((a, b) => Math.sign(a.blocked - b.blocked))
+      .sort((a, b) => Math.sign(a.done - b.done))
   }
 )
 

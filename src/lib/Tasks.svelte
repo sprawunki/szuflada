@@ -41,12 +41,12 @@
     .tasks {
         padding: 0.5rem 0 1.5rem;
     }
-    .blocked,
-    .done {
-        color: gray;
+    .blocked {
+        color: #333;
     }
 
     .done {
+        color: gray;
         text-decoration: line-through;
     }
 

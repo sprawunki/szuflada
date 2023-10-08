@@ -1,3 +1,4 @@
+import { default as moment } from 'moment'
 import { writable, derived } from 'svelte/store'
 import { Graph } from "graph-data-structure";
 
@@ -39,14 +40,30 @@ export const taskList = derived(
 
     const { links, nodes } = graph.serialize()
 
+    const defaultDeadline = moment().add(10, 'days')
+
     return Object.values($tasks)
       .map(task => {
         task.done = task['https://szuflada.app/ns/status'] == 'https://szuflada.app/ns/done';
         task.blocked = links.some(link => task['@id'] == link.target && !isDone($tasks[link.source]));
+
         return task
       })
-      .sort((a, b) => order.indexOf(a['@id']) - order.indexOf(b['@id']))
-      .sort((a, b) => Math.sign(a.blocked - b.blocked))
+      .sort((a, b) => {
+        const deadlineA = a['https://szuflada.app/ns/deadline'] ? moment(a['https://szuflada.app/ns/deadline']) : defaultDeadline;
+        const deadlineB = b['https://szuflada.app/ns/deadline'] ? moment(b['https://szuflada.app/ns/deadline']) : defaultDeadline;
+
+        const urgencyA = Math.max(0, deadlineA.diff(moment(), 'days'))
+        const urgencyB = Math.max(0, deadlineB.diff(moment(), 'days'))
+
+        const importanceA = order.indexOf(a['@id'])
+        const importanceB = order.indexOf(b['@id'])
+
+        const weightA = Math.sqrt((urgencyA * urgencyA) + (importanceA * importanceA))
+        const weightB = Math.sqrt((urgencyB * urgencyB) + (importanceB * importanceB))
+
+        return weightA - weightB
+      })
       .sort((a, b) => Math.sign(a.done - b.done))
   }
 )

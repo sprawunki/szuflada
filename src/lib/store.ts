@@ -36,7 +36,29 @@ export const taskList = derived(
       });
     });
 
-    const order = graph.topologicalSort();
+    const now = new Date()
+
+    const importanceOrder = graph.topologicalSort();
+    const deadlineOrder = Object.values($tasks)
+      .sort((a, b) => importanceOrder.indexOf(a['@id']) - importanceOrder.indexOf(b['@id']))
+      .sort((a, b) => {
+        const deadlineA = a['https://szuflada.app/ns/deadline'] ? new Date(a['https://szuflada.app/ns/deadline']) : Infinity
+        const deadlineB = b['https://szuflada.app/ns/deadline'] ? new Date(b['https://szuflada.app/ns/deadline']) : Infinity
+
+
+        return deadlineA - deadlineB
+      })
+      .map(item => item['@id'])
+    const scheduledOrder = Object.values($tasks)
+      .sort((a, b) => importanceOrder.indexOf(a['@id']) - importanceOrder.indexOf(b['@id']))
+      .sort((a, b) => {
+        const scheduledA = a['https://szuflada.app/ns/scheduled'] ? new Date(a['https://szuflada.app/ns/scheduled']) : now
+        const scheduledB = b['https://szuflada.app/ns/scheduled'] ? new Date(b['https://szuflada.app/ns/scheduled']) : now
+
+
+        return scheduledA - scheduledB
+      })
+      .map(item => item['@id'])
 
     const { links, nodes } = graph.serialize()
 
@@ -50,21 +72,21 @@ export const taskList = derived(
         return task
       })
       .sort((a, b) => {
-        const deadlineA = a['https://szuflada.app/ns/deadline'] ? moment(a['https://szuflada.app/ns/deadline']) : defaultDeadline;
-        const deadlineB = b['https://szuflada.app/ns/deadline'] ? moment(b['https://szuflada.app/ns/deadline']) : defaultDeadline;
+        const importanceA = importanceOrder.indexOf(a['@id'])
+        const importanceB = importanceOrder.indexOf(b['@id'])
 
-        const urgencyA = Math.max(0, deadlineA.diff(moment(), 'days'))
-        const urgencyB = Math.max(0, deadlineB.diff(moment(), 'days'))
+        const scheduledA = scheduledOrder.indexOf(a['@id'])
+        const scheduledB = scheduledOrder.indexOf(b['@id'])
 
-        const importanceA = order.indexOf(a['@id'])
-        const importanceB = order.indexOf(b['@id'])
+        const deadlineA = deadlineOrder.indexOf(a['@id'])
+        const deadlineB = deadlineOrder.indexOf(b['@id'])
 
-        const weightA = Math.sqrt((urgencyA * urgencyA) + (importanceA * importanceA))
-        const weightB = Math.sqrt((urgencyB * urgencyB) + (importanceB * importanceB))
+        const weightA = Math.sqrt((scheduledA * scheduledA) + (deadlineA * deadlineA) + (importanceA * importanceA))
+        const weightB = Math.sqrt((scheduledB * scheduledB) + (deadlineB * deadlineB) + (importanceB * importanceB))
 
         return weightA - weightB
       })
-      .sort((a, b) => Math.sign(a.done - b.done))
+      .sort((a, b) => a.done - b.done)
   }
 )
 

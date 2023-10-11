@@ -1,6 +1,6 @@
 import { default as moment } from 'moment'
 import { writable, derived } from 'svelte/store'
-import { Graph } from "graph-data-structure";
+import { Graph, alg } from "@dagrejs/graphlib";
 
 const isDone = (task) => task["https://szuflada.app/ns/status"] == "https://szuflada.app/ns/done"
 
@@ -25,20 +25,24 @@ export const taskList = derived(
     const graph = new Graph();
 
     Object.values($tasks).forEach(task => {
-      graph.addNode(task['@id']);
+      graph.setNode(task['@id']);
+    });
 
+
+    Object.values($tasks).forEach(task => {
       task['https://szuflada.app/ns/before'].forEach(before => {
-        graph.addEdge(task['@id'], before['@id']);
+        graph.setEdge(task['@id'], before['@id']);
       });
 
       task['https://szuflada.app/ns/after'].forEach(after => {
-        graph.addEdge(after['@id'], task['@id']);
+        graph.setEdge(after['@id'], task['@id']);
       });
     });
 
     const now = new Date()
 
-    const importanceOrder = graph.topologicalSort();
+    const importanceOrder = alg.topsort(graph);
+
     const deadlineOrder = Object.values($tasks)
       .sort((a, b) => importanceOrder.indexOf(a['@id']) - importanceOrder.indexOf(b['@id']))
       .sort((a, b) => {
@@ -60,14 +64,14 @@ export const taskList = derived(
       })
       .map(item => item['@id'])
 
-    const { links, nodes } = graph.serialize()
+    const links = graph.edges()
 
     const defaultDeadline = moment().add(10, 'days')
 
     return Object.values($tasks)
       .map(task => {
         task.done = task['https://szuflada.app/ns/status'] == 'https://szuflada.app/ns/done';
-        task.blocked = links.some(link => task['@id'] == link.target && !isDone($tasks[link.source]));
+        task.blocked = links.some(link => task['@id'] == link.w && !isDone($tasks[link.v]));
 
         return task
       })

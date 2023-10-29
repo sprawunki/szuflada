@@ -13,10 +13,8 @@ const handleUpdate = () => {
     postMessage(Object.values(bookmarks).map(graph => graph[0]))
 
     if (updateQueue.size === 0 && updateQueue.pending === 0) {
-      console.log("on add")
       return updateQueue.on('add', handleUpdate)
     } else {
-      console.log("on idle")
       return updateQueue.on('idle', handleUpdate)
     }
   }, 100)
@@ -26,8 +24,6 @@ updateQueue.on('idle', handleUpdate)
 onmessage = (event) => {
   updateQueue.add(
     () => {
-      console.log("worker", event.data.path)
-
       const graph = event.data.newValue
       const id = graph['@id']
 

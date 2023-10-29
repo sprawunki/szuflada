@@ -7,7 +7,7 @@
   <h2>Bookmarks</h2>
   <ul class='bookmarklist'>
   {#each $bookmarkList as bookmark}
-  <li class="bookmark">
+  <li class="bookmark" id={bookmark['@id']}>
     <div class="bookmark__title">
       {bookmark.title}
     </div>

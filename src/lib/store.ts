@@ -1,6 +1,7 @@
 import { default as moment } from 'moment'
 import { writable, derived } from 'svelte/store'
-import { Graph, alg } from "@dagrejs/graphlib";
+import graphlib from '@dagrejs/graphlib'
+const { Graph, alg } = graphlib
 
 const isDone = (task) => task["https://szuflada.app/ns/status"] == "https://szuflada.app/ns/done"
 
@@ -39,7 +40,11 @@ export const taskList = derived(
       });
     });
 
-    const now = new Date()
+    const now = new Date();
+
+    if (!alg.isAcyclic(graph)) {
+      return [];
+    }
 
     const importanceOrder = alg.topsort(graph);
 
@@ -105,5 +110,36 @@ export const taskToComparePriorityTo = derived(
     const toDo = [...$taskList].filter(task => !isDone(task) && !task.blocked)
 
     return toDo[parseInt(toDo.length / 2)]
+  }
+)
+
+export const cycles = derived(
+  tasks,
+  $tasks => {
+    const graph = new Graph();
+
+    Object.values($tasks).forEach(task => {
+      graph.setNode(task['@id']);
+    });
+
+
+    Object.values($tasks).forEach(task => {
+      task['https://szuflada.app/ns/before'].forEach(before => {
+        graph.setEdge(task['@id'], before['@id']);
+      });
+
+      task['https://szuflada.app/ns/after'].forEach(after => {
+        graph.setEdge(after['@id'], task['@id']);
+      });
+    });
+
+    if (alg.isAcyclic(graph)) {
+      return []
+    }
+
+    const cycle = alg.findCycles(graph)[0];
+
+    return Object.values($tasks)
+      .filter(task => cycle.includes(task['@id']))
   }
 )

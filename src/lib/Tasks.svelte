@@ -2,6 +2,7 @@
   import { default as moment } from 'moment'
 
   import CompareTasks from '$lib/CompareTasks.svelte';
+  import Cycles from '$lib/Cycles.svelte';
 
   import { tasks, taskList } from '$lib/store'
   import { remoteStorage } from '$lib/remotestorage.ts'
@@ -18,8 +19,9 @@
 </script>
 
 <div class="tasks">
-  <CompareTasks />
   <h2>Tasks</h2>
+  <CompareTasks />
+  <Cycles />
   <ul class='tasklist'>
   {#each $taskList as task}
   <li class="task" id={task["@id"]}>

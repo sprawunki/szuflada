@@ -56,7 +56,7 @@
   }
 
   .bookmark {
-    padding: 0.25em 0;
+    padding: 0.125em 0;
   }
 
   .bookmark::after {
@@ -64,7 +64,7 @@
     display: block;
     width: 100%;
     height: 1px;
-    margin: 1rem auto;
+    margin: 0.5rem auto;
     background: #ccc;
   }
 
@@ -74,14 +74,15 @@
 
   .bookmark__title {
     width: 100%;
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     margin: 0;
   }
 
   .bookmark__meta {
-    margin: 0 0 0.5em;
+    margin: 0;
     padding: 0;
     color: #666;
+    font-size: 0.75rem;
 
     display: block;
     text-align: right;

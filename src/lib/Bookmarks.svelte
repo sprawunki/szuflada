@@ -4,7 +4,7 @@
 </script>
 
 <div class="bookmarks">
-  <h2>Bookmarks</h2>
+  <h2>Bookmarks ({$bookmarkList.length})</h2>
   <ul class='bookmarklist'>
   {#each $bookmarkList as bookmark}
   <li class="bookmark" id={bookmark['@id']}>

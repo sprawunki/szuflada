@@ -8,9 +8,9 @@
   <ul class='bookmarklist'>
   {#each $bookmarkList as bookmark}
   <li class="bookmark" id={bookmark['@id']}>
-    <div class="bookmark__title">
+    <h3 class="bookmark__title">
       {bookmark.title}
-    </div>
+    </h3>
     <dl class="bookmark__meta">
       <dt>created</dt>
       <dd title="{moment(bookmark.created).calendar()}">{moment(bookmark.created).fromNow()}</dd>
@@ -72,7 +72,7 @@
     display: flex;
   }
 
-  .bookmark__title {
+  .bookmark h3 {
     width: 100%;
     font-size: 1.25rem;
     margin: 0;

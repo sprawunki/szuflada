@@ -19,7 +19,7 @@
 </script>
 
 <div class="tasks">
-  <h2>Tasks</h2>
+  <h2>Tasks ({$taskList.filter(task => !task.done).length}/{$taskList.length})</h2>
   <CompareTasks />
   <Cycles />
   <ul class='tasklist'>

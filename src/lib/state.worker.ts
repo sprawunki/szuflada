@@ -9,8 +9,22 @@ const handleUpdate = () => {
   updateQueue.off('add', handleUpdate)
   updateQueue.off('idle', handleUpdate)
 
-  setTimeout(() => {
-    postMessage(bookmarks)
+  setTimeout(async () => {
+    const bookmarkIndices = await Promise.all(
+      Object.entries(
+        Object.values(bookmarks)
+          .group(bookmark => bookmark['@id'][9])
+      )
+      .map(async group => [group[0], await jsonld.canonize(group[1])])
+    )
+    .then(groups => Object.fromEntries(groups))
+
+    postMessage({
+      indices: {
+        bookmarks: bookmarkIndices
+      },
+      bookmarks: bookmarks
+    })
 
     if (updateQueue.size === 0 && updateQueue.pending === 0) {
       return updateQueue.on('add', handleUpdate)
@@ -25,17 +39,32 @@ updateQueue.on('idle', handleUpdate)
 onmessage = (event) => {
   updateQueue.add(
     async () => {
-      let graph = event.data.newValue
+      let newGraph = event.data.newValue
+      let oldGraph = event.data.oldValue
 
       if (event.data.newContentType === "application/n-quads") {
-        graph = await jsonld.fromRDF(graph)
+        newGraph = await jsonld.fromRDF(newGraph)
       }
 
-      delete graph['@context']
+      if (event.data.oldContentType === "application/n-quads") {
+        oldGraph = await jsonld.fromRDF(oldGraph)
+      }
+
+      if (oldGraph) {
+        [oldGraph]
+          .flat()
+          .forEach(item => delete bookmarks[item['@id']])
+      }
+
+      if (!newGraph) {
+        return;
+      }
+
+      delete newGraph['@context']
 
       return await jsonld
         .frame(
-          graph,
+          newGraph,
           {
             "@context": {
               "bookmark": "http://www.w3.org/2002/01/bookmark#",

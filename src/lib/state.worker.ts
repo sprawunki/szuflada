@@ -10,7 +10,7 @@ const handleUpdate = () => {
   updateQueue.off('idle', handleUpdate)
 
   setTimeout(() => {
-    postMessage(Object.values(bookmarks).map(graph => graph[0]))
+    postMessage(bookmarks)
 
     if (updateQueue.size === 0 && updateQueue.pending === 0) {
       return updateQueue.on('add', handleUpdate)

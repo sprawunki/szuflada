@@ -10,9 +10,9 @@ export const bookmarks = writable({})
 export const bookmarkList = derived(
   bookmarks,
   $bookmarks => [...Object.values($bookmarks)
-    .sort((a: any, b: any) => b["created"]
+    .sort((a: any, b: any) => b["dc:created"]
       .localeCompare(
-        a["created"]
+        a["dc:created"]
       )
     )
   ]

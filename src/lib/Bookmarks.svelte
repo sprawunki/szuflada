@@ -9,16 +9,16 @@
   {#each $bookmarkList as bookmark}
   <li class="bookmark" id={bookmark['@id']}>
     <h3 class="bookmark__title">
-      {bookmark.title}
+      {bookmark['bookmark:title']}
     </h3>
     <dl class="bookmark__meta">
       <dt>created</dt>
-      <dd title="{moment(bookmark.created).calendar()}">{moment(bookmark.created).fromNow()}</dd>
+      <dd title="{moment(bookmark['dc:created']).calendar()}">{moment(bookmark['dc:created']).fromNow()}</dd>
     </dl>
     <ul class="bookmark__actions">
       <li class="action">
-        <a class="action__visit" target="_blank" rel="noreferrer noopener" href={bookmark.recalls['@id']}>
-          {bookmark.recalls['@id']}
+        <a class="action__visit" target="_blank" rel="noreferrer noopener" href={bookmark['bookmark:recalls']['@id']}>
+          {bookmark['bookmark:recalls']['@id']}
         </a>
       </li>
     </ul>

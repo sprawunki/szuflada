@@ -19,42 +19,67 @@ const handleUpdate = () => {
     }
   }, 100)
 }
+
 updateQueue.on('idle', handleUpdate)
 
 onmessage = (event) => {
   updateQueue.add(
-    () => {
-      const graph = event.data.newValue
-      const id = graph['@id']
+    async () => {
+      let graph = event.data.newValue
+
+      if (event.data.newContentType === "application/n-quads") {
+        graph = await jsonld.fromRDF(graph)
+      }
 
       delete graph['@context']
 
-      return jsonld.expand(graph)
-        .then(graph => jsonld.frame(
-          graph,
-          {
-            "http://www.w3.org/2002/01/bookmark#recalls": {},
-            "http://www.w3.org/2002/01/bookmark#title": {},
-            "http://purl.org/dc/elements/1.1/#created": {},
-            "@explicit": true,
-            "@requireAll": true,
-          }
-        ))
-        .then(graph => jsonld.compact(
+      return await jsonld
+        .frame(
           graph,
           {
             "@context": {
-              "created": "http://purl.org/dc/elements/1.1/#created",
-              "title": "http://www.w3.org/2002/01/bookmark#title",
-              "recalls": "http://www.w3.org/2002/01/bookmark#recalls"
-            }
+              "bookmark": "http://www.w3.org/2002/01/bookmark#",
+              "dc": "http://purl.org/dc/elements/1.1/#",
+              "prov": "http://www.w3.org/ns/prov#",
+            },
+            "bookmark:recalls": {},
+            "bookmark:title": {},
+            "dc:created": {},
+            "dc:date": {},
+            "@explicit": true,
+            "@requireAll": true,
           }
+        )
+        .then(graph => jsonld.expand(graph))
+        .then(graph => graph.map(bookmark =>
+          jsonld.frame(
+            bookmark,
+            {
+              "@context": {
+                "bookmark": "http://www.w3.org/2002/01/bookmark#",
+                "dc": "http://purl.org/dc/elements/1.1/#",
+                "prov": "http://www.w3.org/ns/prov#",
+              },
+              "bookmark:recalls": {},
+              "bookmark:title": {},
+              "dc:created": {},
+              "dc:date": {},
+              "@explicit": true,
+              "@requireAll": true,
+            }
+          )
         ))
-        .then(graph => [graph].group(g => g['@id']))
+        .then(graph => Promise.all(graph))
+        .then(graph => graph.map(bookmark => [bookmark['@id'], bookmark]))
+        .then(graph => Object.fromEntries(graph))
         .then(graphs => { bookmarks = {...bookmarks, ...graphs }})
         .catch(error => console.error(error, graph))
     }
   )
 }
+
+updateQueue.add(
+  () => {}
+)
 
 export {}

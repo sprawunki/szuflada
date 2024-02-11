@@ -1,4 +1,7 @@
-.git/
-deploy/
-node_modules/
+.git
+.svelte-kit
+build
+deploy
+node_modules
+public
 skaffold.yaml

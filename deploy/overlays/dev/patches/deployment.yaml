@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: szuflada
+spec:
+  selector:
+    matchLabels:
+      app: szuflada
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: szuflada
+    spec:
+      containers:
+      - name: szuflada
+        ports:
+        - containerPort: 80
+          $patch: delete
+        - name: http
+          containerPort: 5173

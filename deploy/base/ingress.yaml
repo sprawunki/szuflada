@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: szuflada
+  # annotations:
+  #   haproxy.org/path-rewrite: /szuflada/(.*) /\1
+spec:
+  rules:
+  - http:
+      paths:
+      - path: "/szuflada"
+        pathType: Prefix
+        backend:
+          service:
+            name: szuflada
+            port:
+              number: 80

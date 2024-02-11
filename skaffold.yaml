@@ -1,7 +1,7 @@
-apiVersion: skaffold/v2beta22
+apiVersion: skaffold/v4beta9
 kind: Config
 metadata:
-  name: kupmi
+  name: szuflada
 build:
   local:
     useBuildkit: true
@@ -10,11 +10,27 @@ build:
       docker:
         dockerfile: Dockerfile
         target: app
-      sync:
-        manual:
-          - src: 'src/lib/**'
-            dest: '/app'
-deploy:
+      context: '.'
+manifests:
   kustomize:
     paths:
-      - "deploy"
+      - deploy/base
+profiles:
+  - name: development
+    activation:
+      - command: dev
+    build:
+      artifacts:
+        - image: harbor.k8s.lan/sprawunki/szuflada
+          docker:
+            dockerfile: Dockerfile
+            target: dev
+          context: '.'
+          sync:
+            manual:
+              - src: 'src/**'
+                dest: '/app'
+    manifests:
+      kustomize:
+        paths:
+          - deploy/overlays/dev

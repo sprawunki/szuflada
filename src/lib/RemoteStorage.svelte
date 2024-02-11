@@ -1,8 +1,10 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { connect, disconnect, remoteStorage, getBookmarkList, getTasks, getBookmark, putIndex, getIndices } from '$lib/remotestorage.ts'
 
   import { bookmarks, tasks } from '$lib/store'
+
+  const workers = {}
 
   let remote = remoteStorage.remote
 
@@ -27,14 +29,14 @@
 
   onMount(async () => {
     const StateWorker = await import('$lib/state.worker?worker')
-    const worker = new StateWorker.default()
+    workers.state = new StateWorker.default()
 
     remoteStorage['szuflada.app/index'].getPrivateClient().on('change', (event: any) => {
-      worker.postMessage(event)
+      workers.state.postMessage(event)
     })
 
     remoteStorage['szuflada.app/bookmark'].getPrivateClient().on('change', (event: any) => {
-      worker.postMessage(event)
+      workers.state.postMessage(event)
     })
 
     remoteStorage['szuflada.app/task'].getPrivateClient().on('change', (event: any) => {
@@ -68,17 +70,17 @@
       ])
       .then(bookmarkIds => {
         bookmarkIds[0].forEach(
-          bookmarkId => worker.postMessage({ oldValue: { "@id": bookmarkId } })
+          bookmarkId => workers.state.postMessage({ oldValue: { "@id": bookmarkId } })
         )
         bookmarkIds[1].forEach(
           bookmarkId => getBookmark(bookmarkId)
-            .then(bookmark => worker.postMessage({ newValue: bookmark }))
+            .then(bookmark => workers.state.postMessage({ newValue: bookmark }))
         )
       })
 
     let refreshInterval
 
-    worker.onmessage = (event) => {
+    workers.state.onmessage = (event) => {
       clearInterval(refreshInterval)
 
       for (const indexKey in event.data.indices.bookmarks) {
@@ -93,6 +95,12 @@
         fetchBookmarks,
         30000
       )
+    }
+  })
+
+  onDestroy(() => {
+    for (const worker in workers) {
+      workers[worker].terminate()
     }
   })
 </script>

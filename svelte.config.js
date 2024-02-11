@@ -15,12 +15,7 @@ const config = {
 			pages: 'build',
 			assets: 'build',
 			fallback: 'index.html'
-		}),
-
-		// Override http methods in the Todo forms
-		methodOverride: {
-			allowed: ['PATCH', 'DELETE']
-		}
+		})
 	}
 };
 

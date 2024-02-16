@@ -9,12 +9,10 @@
   let remote = remoteStorage.remote
 
   remoteStorage.on("connected", () => {
-    console.log("connected")
     remote = remoteStorage.remote
   })
 
   remoteStorage.on("disconnected", () => {
-    console.log("disconnected")
     remote = remoteStorage.remote
   })
 
@@ -66,22 +64,38 @@
       ])
       .then(bookmarkIds => [
         bookmarkIds[0],
-        bookmarkIds[1].slice(0, 16)
+        Object.values(Object.groupBy(bookmarkIds[1], (id: string) => id[9]))
+      ])
+      .then(bookmarkIds => [
+        bookmarkIds[0],
+        bookmarkIds[1][parseInt(Math.random() * bookmarkIds[1].length)] ?? []
+      ])
+      .then(bookmarkIds => [
+        bookmarkIds[0],
+        bookmarkIds[1]
       ])
       .then(bookmarkIds => {
         bookmarkIds[0].forEach(
-          bookmarkId => workers.state.postMessage({ oldValue: { "@id": bookmarkId } })
+          bookmarkId => workers.state.postMessage({
+            newValue: undefined,
+            oldValue: { "@id": bookmarkId }
+          })
         )
         bookmarkIds[1].forEach(
           bookmarkId => getBookmark(bookmarkId)
-            .then(bookmark => workers.state.postMessage({ newValue: bookmark }))
+            .then(bookmark => workers.state.postMessage({
+              newValue: bookmark,
+              oldValue: undefined
+            }))
         )
       })
 
-    let refreshInterval
+    let refresh
 
     workers.state.onmessage = (event) => {
-      clearInterval(refreshInterval)
+      getIndices()
+
+      clearTimeout(refresh)
 
       for (const indexKey in event.data.indices.bookmarks) {
         putIndex(indexKey, event.data.indices.bookmarks[indexKey])
@@ -89,11 +103,9 @@
 
       bookmarks.set(event.data.bookmarks)
 
-      fetchBookmarks()
-
-      refreshInterval = setInterval(
+      refresh = setTimeout(
         fetchBookmarks,
-        30000
+        5000
       )
     }
   })

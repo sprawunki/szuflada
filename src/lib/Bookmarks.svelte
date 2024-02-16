@@ -17,9 +17,13 @@
     </dl>
     <ul class="bookmark__actions">
       <li class="action">
+        {#if bookmark['bookmark:recalls'] && bookmark['bookmark:recalls']['@id']}
         <a class="action__visit" target="_blank" rel="noreferrer noopener" href={bookmark['bookmark:recalls']['@id']}>
           {bookmark['bookmark:recalls']['@id']}
         </a>
+        {:else}
+        <em>Unavailable: {bookmark['@id']}</em>
+        {/if}
       </li>
     </ul>
   </li>

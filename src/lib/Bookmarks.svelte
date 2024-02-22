@@ -1,10 +1,15 @@
 <script lang="ts">
-  import { bookmarkList } from '$lib/store'
+  import { bookmarkList, bookmarkProgress } from '$lib/store'
   import { default as moment } from 'moment'
 </script>
 
 <div class="bookmarks">
+  <div class="progress">
+    <div class="progressBar" style={`width: ${$bookmarkProgress*100}%; transition: width ${+!!$bookmarkProgress}s;`}></div>
+  </div>
+
   <h2>Bookmarks ({$bookmarkList.length})</h2>
+
   <ul class='bookmarklist'>
   {#each $bookmarkList as bookmark}
   <li class="bookmark" id={bookmark['@id']}>
@@ -32,6 +37,19 @@
 </div>
 
 <style>
+  .progressBar {
+    background: #0cc;
+    height: 0.125rem;
+  }
+
+  .progress {
+    position: sticky;
+    top: 0;
+    right: 0;
+    left: 0;
+    background: #077;
+  }
+
   .bookmarks {
     max-width: 100%;
     overflow-wrap: break-word;
@@ -78,16 +96,15 @@
 
   .bookmark h3 {
     width: 100%;
-    font-size: 1.25rem;
+    font-size: 1em;
     margin: 0;
   }
 
   .bookmark__meta {
     margin: 0;
     padding: 0;
-    color: #666;
-    font-size: 0.75rem;
-
+    color: #777;
+    font-size: 0.75em;
     display: block;
     text-align: right;
   }

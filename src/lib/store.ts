@@ -6,7 +6,7 @@ const { Graph, alg } = graphlib
 const isDone = (task) => task["https://szuflada.app/ns/status"] == "https://szuflada.app/ns/done"
 
 export const bookmarks = writable({})
-
+export const bookmarkProgress = writable(0)
 export const bookmarkList = derived(
   bookmarks,
   $bookmarks => [...Object.values($bookmarks)

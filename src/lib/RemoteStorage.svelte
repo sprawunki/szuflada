@@ -2,7 +2,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { connect, disconnect, remoteStorage, getBookmarkList, getTasks, getBookmark, putIndex, getIndices } from '$lib/remotestorage.ts'
 
-  import { bookmarks, tasks } from '$lib/store'
+  import { bookmarks, bookmarkProgress, tasks } from '$lib/store'
 
   const workers = {}
 
@@ -106,6 +106,10 @@
     let refresh
 
     workers.state.onmessage = (event) => {
+      if (event.data.hasOwnProperty('progress')) {
+        bookmarkProgress.set(event.data.progress)
+      }
+
       if (event.data.hasOwnProperty('bookmarks')) {
         clearTimeout(refresh)
 

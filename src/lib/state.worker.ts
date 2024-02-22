@@ -81,6 +81,26 @@ const updateQueue = new PQueue({
   concurrency: 4,
 })
 
+let maxQueueLength = 0;
+
+updateQueue.on(
+  "next",
+  () => {
+    let progress = 1;
+
+    const queueLength = updateQueue.size + updateQueue.pending
+    maxQueueLength = Math.max(queueLength, maxQueueLength)
+
+    if (queueLength && maxQueueLength) {
+      progress = 1 - (queueLength / maxQueueLength)
+    } else {
+      maxQueueLength = 0
+    }
+
+    postMessage({ progress: progress })
+  }
+)
+
 const handleUpdate = async () => {
   updateQueue.off('add', handleUpdate)
   updateQueue.off('idle', handleUpdate)

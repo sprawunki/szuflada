@@ -27,10 +27,6 @@ const bookmarkFrame =
     "@graph": {
       "@type": ["schema:Book", "schema:Product"],
       "schema:name": {},
-      "schema:image": {
-        "@type": "xsd:string",
-        "@embed": "@never",
-      },
       "schema:brand": {},
       "schema:mpn": {},
       "schema:gtin": {},
@@ -47,8 +43,8 @@ const bookmarkFrame =
         },
         "schema:price": {},
         "schema:priceCurrency": {},
-        "@requireAll": true,
         "@explicit": false,
+        "@requireAll": true,
       },
       "@explicit": true,
       "@requireAll": false,
@@ -70,7 +66,6 @@ const bookmarkFrameMinimal = {
   "@context": {
     "bookmark": "http://www.w3.org/2002/01/bookmark#",
     "dc": "http://purl.org/dc/elements/1.1/#",
-    "og": "https://ogp.me/ns#",
     "prov": "http://www.w3.org/ns/prov#",
   },
   "bookmark:recalls": {},
@@ -82,79 +77,81 @@ const bookmarkFrameMinimal = {
   "@omitDefault": true,
 }
 
-const updateQueue = new PQueue({concurrency: 8})
+const updateQueue = new PQueue({
+  concurrency: 4,
+})
 
-updateQueue.on(
-  "next",
-  () => {
-    console.info("Q_SIZE_STATE", updateQueue.size, updateQueue.pending)
-  }
-)
-
-const handleUpdate = () => {
+const handleUpdate = async () => {
   updateQueue.off('add', handleUpdate)
   updateQueue.off('idle', handleUpdate)
 
-  setTimeout(async () => {
-    const bookmarkIndices = Object.values(bookmarks).group(bookmark => bookmark['@id'][9])
+  await updateQueue.addAll([
+    async () => {
+      const bookmarkIndices = Object.values(bookmarks).group(bookmark => bookmark['@id'][9])
 
-    for (const indexId in bookmarkIndices) {
-      try {
-        bookmarkIndices[indexId] = await Promise
-          .all(
-            bookmarkIndices[indexId]
-              .map(async index => {
-                try {
-                  return await jsonld.canonize(index)
-                } catch (error) {
-                  console.error("Canonization error: skipping item", index, error)
-                  return ''
-                }
-              })
-          )
-          .then(items => items.join('\n'))
-      } catch (error) {
-        console.error("Couldn't create index", indexId, bookmarkIndices[indexId])
-        bookmarkIndices[indexId] = ''
+      for (const indexId in bookmarkIndices) {
+        try {
+          bookmarkIndices[indexId] = await Promise
+            .all(
+              bookmarkIndices[indexId]
+                .map(async index => {
+                  try {
+                    return await jsonld.canonize(index)
+                  } catch (error) {
+                    console.error("Canonization error: skipping item", index, error)
+                    return ''
+                  }
+                })
+            )
+            .then(items => items.join('\n'))
+        } catch (error) {
+          console.error("Couldn't create index", indexId, bookmarkIndices[indexId])
+          bookmarkIndices[indexId] = ''
+        }
       }
+
+      const newBookmarkIndices = Object.values(bookmarkIndices).join('\n')
+      if (newBookmarkIndices == oldBookmarkIndices) {
+        return;
+      }
+
+      oldBookmarkIndices = newBookmarkIndices
+
+      return postMessage({
+        indices: {
+          bookmarks: bookmarkIndices
+        },
+      })
+    },
+    () => {
+      return postMessage({
+        bookmarks: bookmarks
+      })
     }
+  ], { priority: -1 })
 
-    const newBookmarkIndices = Object.values(bookmarkIndices).join('\n')
-    if (newBookmarkIndices == oldBookmarkIndices) {
-      return;
-    }
-
-    oldBookmarkIndices = newBookmarkIndices
-
-    postMessage({
-      indices: {
-        bookmarks: bookmarkIndices
-      },
-      bookmarks: bookmarks
-    })
-
-    if (updateQueue.size === 0 && updateQueue.pending === 0) {
-      return updateQueue.on('add', handleUpdate)
-    } else {
-      return updateQueue.on('idle', handleUpdate)
-    }
-  }, 100)
+  updateQueue.on('idle', handleUpdate)
 }
 
 updateQueue.on('idle', handleUpdate)
 
-const frameBookmark = (graph: any) => jsonld
-  .frame(graph, bookmarkFrame)
-  .then(async (graph: any) => {
-    await jsonld
-      .canonize(graph)
-      .catch(error => {
-        console.error("Canonization error: falling back to minimal bookmark frame", error, graph)
-        graph = jsonld.frame(graph, bookmarkFrameMinimal).then(graph => { console.warn(graph); return graph })
-      })
+const frameBookmark = (graph: any) => {
+  return jsonld
+    .expand(graph)
+    .then((graph: any) => jsonld.compact(graph, {"@context": { "schema": "http://schema.org/" }}))
+    .then((graph: any) => { graph['@context'] = { "schema": "https://schema.org/" }; return graph })
+    .then((graph: any) => jsonld.frame(graph, bookmarkFrame))
+    .then(async (graph: any) => {
+      await jsonld
+        .canonize(graph)
+        .catch(error => {
+          console.error("Canonization error: falling back to minimal bookmark frame", error, graph)
+          graph = jsonld.frame(graph, bookmarkFrameMinimal).then(graph => { console.warn(graph); return graph })
+        })
 
-    return graph
-  })
+      return graph
+    })
+}
 
 onmessage = (event) => {
   updateQueue.add(
@@ -175,11 +172,9 @@ onmessage = (event) => {
         oldGraph = await jsonld.fromRDF(oldGraph)
       }
 
-      if (!newGraph) {
-        return;
-      }
-
       if (oldGraph) {
+        delete oldGraph['@context']
+
         const oldBookmarks = await jsonld.frame(oldGraph, { "@type": "http://www.w3.org/2002/01/bookmark#Bookmark" })
 
         if (oldBookmarks['@graph']) {
@@ -187,26 +182,27 @@ onmessage = (event) => {
         }
       }
 
+      if (!newGraph) {
+        return;
+      }
+
       delete newGraph['@context']
 
-      const graphs = await jsonld
-        .compact(newGraph, { "@context": { "schema": "http://schema.org/" } })
-        .then((graph: any) => { graph['@context'] = { "@context": { "schema": "https://schema.org/" } }; return graph })
-        .then((graph: any) => frameBookmark(graph))
+      const graphs = await frameBookmark(newGraph)
         .then((graph: any) => jsonld.expand(graph))
         .then((graph: any) => graph.map(
-          (bookmark: any) => jsonld.frame(bookmark, bookmarkFrame)
+          (bookmark: any) => frameBookmark(bookmark)
         ))
         .then((graph: any) => Promise.all(graph))
         .then((graph: any) => graph.map(
           (bookmark: any) => [bookmark['@id'], bookmark]
         ))
         .then((graph: any) => Object.fromEntries(graph))
-        .catch(error => console.error("STATE WORKER", error, event.data))
+        .catch(error => console.error("STATE WORKER", error, oldGraph, newGraph))
 
       bookmarks = { ...bookmarks, ...graphs }
 
-      return bookmarks;
+      return;
     }
   )
 }

@@ -53,6 +53,19 @@
 
     remoteStorage.on("connected", () => {
       getIndices()
+        .then((indices: any) => {
+          if (indices.length === 0) {
+            return fetchBookmarks()
+          }
+
+          indices.forEach((index: any) => {
+            workers.state.postMessage({
+              newValue: index.data,
+              newContentType: index.contentType
+            })
+          })
+        })
+
       getTasks()
     })
 
@@ -93,20 +106,24 @@
     let refresh
 
     workers.state.onmessage = (event) => {
-      getIndices()
+      if (event.data.hasOwnProperty('bookmarks')) {
+        clearTimeout(refresh)
 
-      clearTimeout(refresh)
+        bookmarks.set(event.data.bookmarks)
 
-      for (const indexKey in event.data.indices.bookmarks) {
-        putIndex(indexKey, event.data.indices.bookmarks[indexKey])
+        getIndices()
+
+        refresh = setTimeout(
+          fetchBookmarks,
+          5000
+        )
       }
 
-      bookmarks.set(event.data.bookmarks)
-
-      refresh = setTimeout(
-        fetchBookmarks,
-        5000
-      )
+      if (event.data.hasOwnProperty('indices')) {
+        for (const indexKey in event.data.indices.bookmarks) {
+          putIndex(indexKey, event.data.indices.bookmarks[indexKey])
+        }
+      }
     }
   })
 

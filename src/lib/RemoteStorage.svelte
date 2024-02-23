@@ -4,6 +4,9 @@
 
   import { bookmarks, bookmarkProgress, tasks } from '$lib/store'
 
+  import { v5 as uuidv5 } from 'uuid'
+  const NS_BOOKMARK = uuidv5("https://szuflada.app/bookmark/", uuidv5.URL)
+
   const workers = {}
 
   let remote = remoteStorage.remote
@@ -51,22 +54,53 @@
       })
     })
 
-    remoteStorage.on("connected", () => {
-      getIndices()
+    remoteStorage.on("ready", () => {
+      const parsedUrl = new URL(window.location);
+
+      const title = parsedUrl.searchParams.get('title');
+      const text = parsedUrl.searchParams.get('text');
+      const url = parsedUrl.searchParams.get('url');
+
+      const getUrlFromCandidate = (candidate) => {
+        try {
+          return new URL(candidate).toString()
+        } catch (e) {
+          return null
+        }
+      }
+
+      const finalUrl = getUrlFromCandidate(url) || getUrlFromCandidate(text)
+
+      if (finalUrl) {
+        console.log("SAVING", finalUrl)
+        remoteStorage['szuflada.app/bookmark'].save({
+          "@id": `urn:uuid:${uuidv5(finalUrl, NS_BOOKMARK)}`,
+          "@type": "http://www.w3.org/2002/01/bookmark#Bookmark",
+          "http://purl.org/dc/elements/1.1/#created": new Date().toISOString(),
+          "http://purl.org/dc/elements/1.1/#date": new Date().toISOString(),
+          "http://www.w3.org/2002/01/bookmark#title": [{
+            "@value": title,
+          }],
+          "http://www.w3.org/2002/01/bookmark#recalls": {
+            "@id": finalUrl
+          }
+        })
+      }
+
+      getTasks()
+        .then(() => getIndices())
         .then((indices: any) => {
           if (indices.length === 0) {
             return fetchBookmarks()
           }
 
-          indices.forEach((index: any) => {
+          return indices.forEach((index: any) => {
             workers.state.postMessage({
               newValue: index.data,
               newContentType: index.contentType
             })
           })
         })
-
-      getTasks()
     })
 
     const fetchBookmarks = () => getBookmarkList()

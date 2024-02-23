@@ -30,9 +30,7 @@ const Bookmark = {
             )
           })
         },
-        get: (uuid: any) => privateClient.getObject(
-          `${uuid}`
-        ),
+        get: (uuid: any) => privateClient.getObject(uuid),
         delete: (uuid: any) => privateClient.remove(
           `${uuid}`
         ),

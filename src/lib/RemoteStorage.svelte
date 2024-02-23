@@ -91,7 +91,10 @@
         bookmarkIds[0].forEach(
           bookmarkId => workers.state.postMessage({
             newValue: undefined,
-            oldValue: { "@id": bookmarkId }
+            oldValue: {
+              "@type": "http://www.w3.org/2002/01/bookmark#Bookmark",
+              "@id": bookmarkId,
+            }
           })
         )
         bookmarkIds[1].forEach(

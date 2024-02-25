@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { connect, disconnect, remoteStorage, getBookmarkList, getTasks, getBookmark, putIndex, getIndices } from '$lib/remotestorage.ts'
+  import { connect, disconnect, remoteStorage, getBookmarkList, getTasks, getBookmark, getIndex, putIndex, getIndices } from '$lib/remotestorage.ts'
 
   import { bookmarks, bookmarkProgress, tasks } from '$lib/store'
 
@@ -162,7 +162,12 @@
 
       if (event.data.hasOwnProperty('indices')) {
         for (const indexKey in event.data.indices.bookmarks) {
-          putIndex(indexKey, event.data.indices.bookmarks[indexKey])
+          getIndex(indexKey)
+            .then(index => {
+              if (index !== event.data.indices.bookmarks[indexKey]) {
+                return putIndex(indexKey, event.data.indices.bookmarks[indexKey])
+              }
+            })
         }
       }
     }

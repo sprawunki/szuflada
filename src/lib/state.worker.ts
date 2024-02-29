@@ -211,11 +211,15 @@ onmessage = (event) => {
       delete newGraph['@context']
 
       const graphs = await frameBookmark(newGraph)
-        .then((graph: any) => jsonld.expand(graph))
-        .then((graph: any) => graph.map(
-          (bookmark: any) => frameBookmark(bookmark)
-        ))
-        .then((graph: any) => Promise.all(graph))
+        .then((graph: any) => graph['@graph'] ? [graph['@graph']]
+          .flat()
+          .map(
+            bookmark => ({
+              "@context": graph['@context'],
+              ...bookmark,
+            })
+          ) : [graph].flat()
+        )
         .then((graph: any) => graph.map(
           (bookmark: any) => [bookmark['@id'], bookmark]
         ))

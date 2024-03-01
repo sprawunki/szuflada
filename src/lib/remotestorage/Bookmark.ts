@@ -7,6 +7,7 @@ const Bookmark = {
   name: 'szuflada.app/bookmark',
   builder: function(privateClient: any, publicClient: any) {
     privateClient.declareType('Bookmark', BookmarkSchema);
+    privateClient.cache('', 'FLUSH');
 
     return {
       exports: {

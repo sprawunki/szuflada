@@ -1,6 +1,8 @@
 const Index = {
   name: 'szuflada.app/index',
   builder: function(privateClient: any, publicClient: any) {
+    privateClient.cache('', 'ALL');
+
     return {
       exports: {
         getPrivateClient: () => privateClient,

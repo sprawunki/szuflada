@@ -1,6 +1,7 @@
 import * as jsonld from 'jsonld'
 import "core-js/actual/array/group.js"
 import PQueue from 'p-queue'
+import { default as moment } from 'moment'
 
 let bookmarks = {}
 let oldBookmarkIndices = ''
@@ -109,7 +110,7 @@ const handleUpdate = async () => {
 
   await updateQueue.addAll([
     async () => {
-      const bookmarkIndices = Object.values(bookmarks).group(bookmark => bookmark['@id'][9])
+      const bookmarkIndices = Object.values(bookmarks).group(bookmark => moment(bookmark['dc:created']).format('YYYY-MM'))
 
       for (const indexId in bookmarkIndices) {
         try {

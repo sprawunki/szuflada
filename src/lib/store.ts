@@ -2,6 +2,11 @@ import { default as moment } from 'moment'
 import { writable, derived } from 'svelte/store'
 import graphlib from '@dagrejs/graphlib'
 const { Graph, alg } = graphlib
+import { v5 as uuidv5 } from 'uuid'
+
+const initTimestamp = +new Date();
+
+const NS_BOOKMARK = uuidv5("https://szuflada.app/bookmark/", uuidv5.URL);
 
 const isDone = (task) => task["https://szuflada.app/ns/status"] == "https://szuflada.app/ns/done"
 
@@ -17,6 +22,17 @@ export const bookmarkList = derived(
     )
   ]
 )
+export const remoteBookmarks = writable({})
+
+export const products = writable({})
+export const productProgress = writable(0)
+export const productList = derived(
+  products,
+  $products => Object
+    .values($products)
+    .filter(product => product['@id'])
+    .sort((a, b) => a['@id'].localeCompare(b['@id']))
+)
 
 export const tasks = writable({})
 
@@ -27,7 +43,7 @@ export const taskList = derived(
 
     Object.values($tasks).forEach(task => {
       graph.setNode(task['@id']);
-    });
+    })
 
 
     Object.values($tasks).forEach(task => {

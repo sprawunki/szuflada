@@ -2,7 +2,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { connect, disconnect, remoteStorage, getBookmarkList, getTasks, getBookmark, getIndex, putIndex, getIndices } from '$lib/remotestorage.ts'
 
-  import { bookmarks, bookmarkProgress, tasks } from '$lib/store'
+  import { bookmarks, bookmarkProgress, tasks, products, productProgress } from '$lib/store'
 
   import { v5 as uuidv5 } from 'uuid'
   const NS_BOOKMARK = uuidv5("https://szuflada.app/bookmark/", uuidv5.URL)
@@ -29,11 +29,25 @@
   }
 
   onMount(async () => {
+    const IndexWorker = await import('$lib/index.worker?worker')
+    workers.index = new IndexWorker.default()
+
+    workers.index.onmessage = (event) => {
+      if (event.data.hasOwnProperty('progress')) {
+        productProgress.set(event.data.progress)
+      }
+
+      if(event.data.result) {
+        products.set(Object.fromEntries((event.data.result['@graph'] ?? []).map(item => [item['@id'], item])))
+      }
+    }
+
     const StateWorker = await import('$lib/state.worker?worker')
     workers.state = new StateWorker.default()
 
     remoteStorage['szuflada.app/index'].getPrivateClient().on('change', (event: any) => {
       workers.state.postMessage(event)
+      workers.index.postMessage(event)
     })
 
     remoteStorage['szuflada.app/bookmark'].getPrivateClient().on('change', (event: any) => {
@@ -96,6 +110,11 @@
 
           return indices.forEach((index: any) => {
             workers.state.postMessage({
+              newValue: index.data,
+              newContentType: index.contentType
+            })
+
+            workers.index.postMessage({
               newValue: index.data,
               newContentType: index.contentType
             })

@@ -1,5 +1,14 @@
 <script lang="ts">
   import { productList, productProgress } from '$lib/store'
+
+  const isValidUrl = (url) => {
+    try {
+      new URL(url)
+      return true
+    } catch (e) {}
+
+    return false;
+  }
 </script>
 
 <div class="products">
@@ -23,7 +32,7 @@
         <tr><td class="product__offers">No offers</td></tr>
       {:else}
         {#each product['schema:offers'].sort((a, b) => parseFloat(a['schema:price']) - parseFloat(b['schema:price'])).sort((a, b) => a['schema:priceCurrency'].localeCompare(b['schema:priceCurrency'])) as offer}
-        {#if offer['schema:url']}
+        {#if offer['schema:url'] && isValidUrl(offer['schema:url'])}
           <tr class={offer['schema:availability']['@id'] == 'schema:InStock' ? 'offer' : 'offer out-of-stock'}>
             <td class="offer__url"><a href={offer['schema:url']} rel="noopener noereferrer">{new URL(offer['schema:url']).host}</a></td>
             <td class="offer__price">{parseFloat(offer['schema:price']).toLocaleString(undefined, { style: "currency", currencyDisplay: "code", currency: offer['schema:priceCurrency']})}</td>

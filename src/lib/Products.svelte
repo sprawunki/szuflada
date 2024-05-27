@@ -78,6 +78,7 @@
   .products {
     max-width: 100%;
     overflow-wrap: break-word;
+    padding: 0 0 1.5rem;
   }
 
   .products a {

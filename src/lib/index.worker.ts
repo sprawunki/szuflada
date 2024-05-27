@@ -2,8 +2,32 @@ import { MemoryLevel } from "memory-level";
 import { DataFactory } from 'rdf-data-factory';
 import { Quadstore } from 'quadstore';
 import { Engine } from 'quadstore-comunica';
+
 import jsonld from "jsonld";
+import { bookmarkContext } from '$lib/jsonld/contexts'
+
 import PQueue from 'p-queue';
+
+const CONTEXTS = {
+  "http://remotestorage.io/spec/modules/szuflada.app/Bookmark": {
+    "@context": bookmarkContext
+  }
+}
+
+const nodeDocumentLoader = jsonld.documentLoaders.xhr()
+
+const customLoader = async (url, options) => {
+  if(url in CONTEXTS) {
+    return {
+      contextUrl: null,
+      document: CONTEXTS[url],
+      documentUrl: url
+    };
+  }
+  return nodeDocumentLoader(url);
+}
+
+jsonld.documentLoader = customLoader
 
 const backend = new MemoryLevel();
 const df = new DataFactory();
@@ -160,7 +184,8 @@ const handleUpdate = () => {
 handleUpdate()
 
 const frameProducts = (nquads: string) => jsonld
-  .fromRDF(nquads, { format: "application/n-quads" })
+  .expand(nquads)
+  //.fromRDF(nquads, { format: "application/n-quads" })
 
 const addQuads = async (data: string, scopeId: string) => {
   await frameProducts(data)

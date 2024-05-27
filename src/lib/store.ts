@@ -10,22 +10,30 @@ const NS_BOOKMARK = uuidv5("https://szuflada.app/bookmark/", uuidv5.URL);
 
 const isDone = (task) => task["https://szuflada.app/ns/status"] == "https://szuflada.app/ns/done"
 
+
 export const bookmarks = writable({})
-export const bookmarkProgress = writable(0)
+
+export const bookmarkProgress = derived(
+  bookmarks,
+  $bookmarks => Object.values($bookmarks).filter(bookmark => bookmark['@id']).length / Object.values($bookmarks).length 
+)
+
 export const bookmarkList = derived(
   bookmarks,
-  $bookmarks => [...Object.values($bookmarks)
-    .sort((a: any, b: any) => b["dc:created"]
-      .localeCompare(
-        a["dc:created"]
-      )
+  $bookmarks => Object.values($bookmarks)
+    .sort((a: any, b: any) => a.hasOwnProperty('http://purl.org/dc/elements/1.1/#created') && b.hasOwnProperty('http://purl.org/dc/elements/1.1/#created')
+        ? b["http://purl.org/dc/elements/1.1/#created"] 
+          .localeCompare(
+            a["http://purl.org/dc/elements/1.1/#created"]
+          )
+        : b.hasOwnProperty('http://purl.org/dc/elements/1.1/#created') - a.hasOwnProperty('http://purl.org/dc/elements/1.1/#created')
     )
-  ]
 )
-export const remoteBookmarks = writable({})
 
 export const products = writable({})
+
 export const productProgress = writable(0)
+
 export const productList = derived(
   products,
   $products => Object
@@ -36,17 +44,25 @@ export const productList = derived(
 
 export const tasks = writable({})
 
+export const taskProgress = derived(
+  tasks,
+  $tasks => Object.values($tasks).filter(task => task['@id']).length / Object.values($tasks).length 
+)
+
 export const taskList = derived(
   tasks,
   $tasks => {
+    const tasks = Object.values($tasks)
+      .filter(task => task['@id'])
+    
     const graph = new Graph();
 
-    Object.values($tasks).forEach(task => {
+    tasks.forEach(task => {
       graph.setNode(task['@id']);
     })
 
 
-    Object.values($tasks).forEach(task => {
+    tasks.forEach(task => {
       task['https://szuflada.app/ns/before'].forEach(before => {
         graph.setEdge(task['@id'], before['@id']);
       });
@@ -64,7 +80,7 @@ export const taskList = derived(
 
     const importanceOrder = alg.topsort(graph);
 
-    const deadlineOrder = Object.values($tasks)
+    const deadlineOrder = tasks
       .sort((a, b) => importanceOrder.indexOf(a['@id']) - importanceOrder.indexOf(b['@id']))
       .sort((a, b) => {
         const deadlineA = a['https://szuflada.app/ns/deadline'] ? new Date(a['https://szuflada.app/ns/deadline']) : Infinity
@@ -74,7 +90,7 @@ export const taskList = derived(
         return deadlineA - deadlineB
       })
       .map(item => item['@id'])
-    const scheduledOrder = Object.values($tasks)
+    const scheduledOrder = tasks
       .sort((a, b) => importanceOrder.indexOf(a['@id']) - importanceOrder.indexOf(b['@id']))
       .sort((a, b) => {
         const scheduledA = a['https://szuflada.app/ns/scheduled'] ? new Date(a['https://szuflada.app/ns/scheduled']) : now
@@ -89,7 +105,7 @@ export const taskList = derived(
 
     const defaultDeadline = moment().add(10, 'days')
 
-    return Object.values($tasks)
+    return tasks
       .map(task => {
         task.done = task['https://szuflada.app/ns/status'] == 'https://szuflada.app/ns/done';
         task.blocked = links.some(link => task['@id'] == link.w && !isDone($tasks[link.v]));
@@ -132,14 +148,17 @@ export const taskToComparePriorityTo = derived(
 export const cycles = derived(
   tasks,
   $tasks => {
+    const tasks = Object.values($tasks)
+      .filter(task => task['@id'])
+      
     const graph = new Graph();
 
-    Object.values($tasks).forEach(task => {
+    tasks.forEach(task => {
       graph.setNode(task['@id']);
     });
 
 
-    Object.values($tasks).forEach(task => {
+    tasks.forEach(task => {
       task['https://szuflada.app/ns/before'].forEach(before => {
         graph.setEdge(task['@id'], before['@id']);
       });
@@ -155,7 +174,7 @@ export const cycles = derived(
 
     const cycle = alg.findCycles(graph)[0];
 
-    return Object.values($tasks)
+    return tasks
       .filter(task => cycle.includes(task['@id']))
   }
 )

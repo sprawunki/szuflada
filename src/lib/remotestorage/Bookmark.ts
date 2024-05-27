@@ -6,8 +6,8 @@ import * as jsonld from 'jsonld'
 const Bookmark = {
   name: 'szuflada.app/bookmark',
   builder: function(privateClient: any, publicClient: any) {
-    privateClient.declareType('Bookmark', BookmarkSchema);
-    privateClient.cache('', 'FLUSH');
+    privateClient.declareType('Bookmark', BookmarkSchema)
+    privateClient.cache('', 'ALL')
 
     return {
       exports: {
@@ -36,7 +36,7 @@ const Bookmark = {
           `${uuid}`
         ),
         getAll: () => {
-          return privateClient.getAll("/")
+          return privateClient.getAll("/", false)
         }
       }
     }

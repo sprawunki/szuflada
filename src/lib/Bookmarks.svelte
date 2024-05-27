@@ -1,6 +1,7 @@
 <script lang="ts">
+  import { base } from "$app/paths"
   import { bookmarkList, bookmarkProgress } from '$lib/store'
-  import { default as moment } from 'moment'
+  import Bookmark from '$lib/Bookmark.svelte'
 </script>
 
 <div class="bookmarks">
@@ -10,30 +11,13 @@
 
   <h2>Bookmarks ({$bookmarkList.length})</h2>
 
-  <ul class='bookmarklist'>
+  <div class='bookmarklist'>
   {#each $bookmarkList as bookmark}
-  <li class="bookmark" id={bookmark['@id']}>
-    <h3 class="bookmark__title">
-      {bookmark['bookmark:title']}
-    </h3>
-    <dl class="bookmark__meta">
-      <dt>created</dt>
-      <dd title="{moment(bookmark['dc:created']).calendar()}">{moment(bookmark['dc:created']).fromNow()}</dd>
-    </dl>
-    <ul class="bookmark__actions">
-      <li class="action">
-        {#if bookmark['bookmark:recalls'] && bookmark['bookmark:recalls']['@id']}
-        <a class="action__visit" target="_blank" rel="noreferrer noopener" href={bookmark['bookmark:recalls']['@id']}>
-          {bookmark['bookmark:recalls']['@id']}
-        </a>
-        {:else}
-        <em>Unavailable: {bookmark['@id']}</em>
-        {/if}
-      </li>
-    </ul>
-  </li>
+  <div id={bookmark['@id']}>
+    <Bookmark bookmark={bookmark} />
+  </div>
   {/each}
-  </ul>
+  </div>
 </div>
 
 <style>
@@ -53,6 +37,7 @@
   .bookmarks {
     max-width: 100%;
     overflow-wrap: break-word;
+    padding: 0 0 1.5rem;
   }
 
   .bookmarks a {
@@ -60,63 +45,14 @@
     max-width: 100%;
   }
 
-  .bookmarklist,
-  .bookmark__actions {
+  .bookmarklist {
     list-style: none;
     margin: 0;
     padding: 0;
   }
 
-  .bookmarklist li,
-  .bookmark__actions li {
+  .bookmarklist li {
     margin: 0;
     padding: 0;
-  }
-
-  .action {
-    max-width: 100%;
-  }
-
-  .bookmark {
-    padding: 0.125em 0;
-  }
-
-  .bookmark::after {
-    content: '';
-    display: block;
-    width: 100%;
-    height: 1px;
-    margin: 0.5rem auto;
-    background: #ccc;
-  }
-
-  .bookmark__actions li {
-    display: flex;
-  }
-
-  .bookmark h3 {
-    width: 100%;
-    font-size: 1em;
-    margin: 0;
-  }
-
-  .bookmark__meta {
-    margin: 0;
-    padding: 0;
-    color: #777;
-    font-size: 0.75em;
-    display: block;
-    text-align: right;
-  }
-
-  .bookmark__meta dt,
-  .bookmark__meta dd {
-    display: inline;
-    margin: 0;
-    padding: 0;
-  }
-
-  .bookmark__meta dt::after {
-    content: '\020';
   }
 </style>

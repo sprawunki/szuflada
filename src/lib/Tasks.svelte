@@ -4,7 +4,7 @@
   import CompareTasks from '$lib/CompareTasks.svelte';
   import Cycles from '$lib/Cycles.svelte';
 
-  import { tasks, taskList } from '$lib/store'
+  import { tasks, taskList, taskProgress } from '$lib/store'
   import { remoteStorage } from '$lib/remotestorage.ts'
 
   const toggleStatus = (task) => {
@@ -19,6 +19,10 @@
 </script>
 
 <div class="tasks">
+  <div class="progress">
+    <div class="progressBar" style={`width: ${$taskProgress*100}%; transition: width ${+!!$taskProgress}s;`}></div>
+  </div>
+
   <h2>Tasks ({$taskList.filter(task => !task.done).length}/{$taskList.length})</h2>
   <CompareTasks />
   <Cycles />
@@ -40,9 +44,25 @@
 </div>
 
 <style>
+  .progressBar {
+    background: #0cc;
+    height: 0.125rem;
+  }
+
+  .progress {
+    position: sticky;
+    top: 0;
+    right: 0;
+    left: 0;
+    background: #077;
+  }
+
     .tasks {
-        padding: 0.5rem 0 1.5rem;
+        max-width: 100%;
+        overflow-wrap: break-word;
+        padding: 0 0 1.5rem;
     }
+
     .blocked {
         color: #333;
     }

@@ -6,7 +6,8 @@ import * as jsonld from 'jsonld'
 const Task = {
   name: 'szuflada.app/task',
   builder: function(privateClient: any, publicClient: any) {
-    privateClient.declareType('Task', TaskSchema);
+    privateClient.declareType('Task', TaskSchema)
+    privateClient.cache('', 'ALL')
 
     return {
       exports: {
@@ -30,14 +31,12 @@ const Task = {
             )
           })
         },
-        get: (uuid: any) => privateClient.getObject(
-          `${uuid}`
-        ),
+        get: (uuid: any) => privateClient.getObject(uuid),
         delete: (uuid: any) => privateClient.remove(
           `${uuid}`
         ),
         getAll: () => {
-          return privateClient.getAll("/")
+          return privateClient.getAll("/", false)
         }
       }
     }

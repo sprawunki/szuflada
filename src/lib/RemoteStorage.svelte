@@ -1,8 +1,20 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { connect, disconnect, remoteStorage, getBookmarkList, getTasks, getBookmark, getIndex, putIndex, getIndices } from '$lib/remotestorage.ts'
+  import {
+    connect,
+    disconnect,
+    remoteStorage,
+    getBookmarks,
+    getTasks,
+  } from '$lib/remotestorage.ts'
 
-  import { bookmarks, bookmarkProgress, tasks, products, productProgress } from '$lib/store'
+  import {
+    bookmarks,
+    tasks,
+    productProgress,
+    products,
+  } from '$lib/store'
+  import * as jsonld from 'jsonld'
 
   import { v5 as uuidv5 } from 'uuid'
   const NS_BOOKMARK = uuidv5("https://szuflada.app/bookmark/", uuidv5.URL)
@@ -42,16 +54,20 @@
       }
     }
 
-    const StateWorker = await import('$lib/state.worker?worker')
-    workers.state = new StateWorker.default()
-
-    remoteStorage['szuflada.app/index'].getPrivateClient().on('change', (event: any) => {
-      workers.state.postMessage(event)
-      workers.index.postMessage(event)
-    })
-
     remoteStorage['szuflada.app/bookmark'].getPrivateClient().on('change', (event: any) => {
-      workers.state.postMessage(event)
+      bookmarks.update(bookmark => {
+        if(event.oldValue && event.oldValue['@id']) {
+          delete bookmark[event.oldValue['@id']];
+        }
+
+        if(event.newValue && event.newValue['@id']) {
+          bookmark[event.newValue['@id']] = event.newValue;
+        }
+
+        return bookmark;
+      })
+
+      workers.index.postMessage(event)
     })
 
     remoteStorage['szuflada.app/task'].getPrivateClient().on('change', (event: any) => {
@@ -102,94 +118,15 @@
       }
 
       getTasks()
-        .then(() => getIndices())
-        .then((indices: any) => {
-          if (indices.length === 0) {
-            return fetchBookmarks()
-          }
+        .then((allTasks: any) => {
+            $tasks = { ...allTasks }
+        })
 
-          return indices.forEach((index: any) => {
-            workers.state.postMessage({
-              newValue: index.data,
-              newContentType: index.contentType
-            })
-
-            workers.index.postMessage({
-              newValue: index.data,
-              newContentType: index.contentType
-            })
-          })
+      getBookmarks()
+        .then((allBookmarks: any) => {
+            $bookmarks = { ...allBookmarks }
         })
     })
-
-    const fetchBookmarks = () => getBookmarkList()
-      .then(bookmarks => bookmarks ? Object.keys(bookmarks) : [])
-      .then(bookmarkIds => [
-        Object.keys($bookmarks).filter(bookmarkId => !bookmarkIds.includes(bookmarkId)),
-        bookmarkIds.filter(bookmarkId => !$bookmarks[bookmarkId])
-      ])
-      .then(bookmarkIds => [
-        bookmarkIds[0],
-        Object.values(Object.groupBy(bookmarkIds[1], (id: string) => id[9]))
-      ])
-      .then(bookmarkIds => [
-        bookmarkIds[0],
-        bookmarkIds[1][parseInt(Math.random() * bookmarkIds[1].length)] ?? []
-      ])
-      .then(bookmarkIds => [
-        bookmarkIds[0],
-        bookmarkIds[1]
-      ])
-      .then(bookmarkIds => {
-        bookmarkIds[0].forEach(
-          bookmarkId => workers.state.postMessage({
-            newValue: undefined,
-            oldValue: {
-              "@type": "http://www.w3.org/2002/01/bookmark#Bookmark",
-              "@id": bookmarkId,
-            }
-          })
-        )
-        bookmarkIds[1].forEach(
-          bookmarkId => getBookmark(bookmarkId)
-            .then(bookmark => workers.state.postMessage({
-              newValue: bookmark,
-              oldValue: undefined
-            }))
-        )
-      })
-
-    let refresh
-
-    workers.state.onmessage = (event) => {
-      if (event.data.hasOwnProperty('progress')) {
-        bookmarkProgress.set(event.data.progress)
-      }
-
-      if (event.data.hasOwnProperty('bookmarks')) {
-        clearTimeout(refresh)
-
-        bookmarks.set(event.data.bookmarks)
-
-        getIndices()
-
-        refresh = setTimeout(
-          fetchBookmarks,
-          5000
-        )
-      }
-
-      if (event.data.hasOwnProperty('indices')) {
-        for (const indexKey in event.data.indices.bookmarks) {
-          getIndex(indexKey)
-            .then(index => {
-              if (index !== event.data.indices.bookmarks[indexKey]) {
-                return putIndex(indexKey, event.data.indices.bookmarks[indexKey])
-              }
-            })
-        }
-      }
-    }
   })
 
   onDestroy(() => {

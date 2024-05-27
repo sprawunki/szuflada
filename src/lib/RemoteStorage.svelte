@@ -5,7 +5,9 @@
     disconnect,
     remoteStorage,
     getBookmarks,
+    getBookmarkList,
     getTasks,
+    getTaskList,
   } from '$lib/remotestorage.ts'
 
   import {
@@ -55,33 +57,37 @@
     }
 
     remoteStorage['szuflada.app/bookmark'].getPrivateClient().on('change', (event: any) => {
-      bookmarks.update(bookmark => {
-        if(event.oldValue && event.oldValue['@id']) {
-          delete bookmark[event.oldValue['@id']];
-        }
+      if (event.origin !== 'local') {
+        bookmarks.update(bookmark => {
+          if(event.oldValue && event.oldValue['@id']) {
+            delete bookmark[event.oldValue['@id']];
+          }
 
-        if(event.newValue && event.newValue['@id']) {
-          bookmark[event.newValue['@id']] = event.newValue;
-        }
+          if(event.newValue && event.newValue['@id']) {
+            bookmark[event.newValue['@id']] = event.newValue;
+          }
 
-        return bookmark;
-      })
+          return bookmark;
+        })
+      }
 
       workers.index.postMessage(event)
     })
 
     remoteStorage['szuflada.app/task'].getPrivateClient().on('change', (event: any) => {
-      tasks.update(task => {
-        if(event.oldValue && event.oldValue['@id']) {
-          delete task[event.oldValue['@id']];
-        }
+      if (event.origin !== 'local') {
+        tasks.update(task => {
+          if(event.oldValue && event.oldValue['@id']) {
+            delete task[event.oldValue['@id']];
+          }
 
-        if(event.newValue && event.newValue['@id']) {
-          task[event.newValue['@id']] = event.newValue;
-        }
+          if(event.newValue && event.newValue['@id']) {
+            task[event.newValue['@id']] = event.newValue;
+          }
 
-        return task;
-      })
+          return task;
+        })
+      }
     })
 
     remoteStorage.on("ready", () => {
@@ -121,11 +127,13 @@
         .then((allTasks: any) => {
             $tasks = { ...allTasks }
         })
+        .then(() => getTaskList())
 
       getBookmarks()
         .then((allBookmarks: any) => {
             $bookmarks = { ...allBookmarks }
         })
+        .then(() => getBookmarkList())
     })
   })
 

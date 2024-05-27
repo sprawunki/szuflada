@@ -18,7 +18,7 @@
             '...'
         url = bookmark['http://www.w3.org/2002/01/bookmark#recalls'] ?
             new URL(bookmark['http://www.w3.org/2002/01/bookmark#recalls']['@id']).toString() :
-            ''
+            '...'
         createdAt = bookmark['http://purl.org/dc/elements/1.1/#created'] ?
             bookmark['http://purl.org/dc/elements/1.1/#created'] :
             null

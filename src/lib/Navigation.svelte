@@ -11,7 +11,7 @@
             <a href="{base}/products/">Products</a>
         </li>
         <li>
-            <a href="{base}/task/">Tasks</a>
+            <a href="{base}/tasks/">Tasks</a>
         </li>
     </ul>
 </div>

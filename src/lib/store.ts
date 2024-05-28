@@ -10,7 +10,6 @@ const NS_BOOKMARK = uuidv5("https://szuflada.app/bookmark/", uuidv5.URL);
 
 const isDone = (task) => task["https://szuflada.app/ns/status"] == "https://szuflada.app/ns/done"
 
-
 export const bookmarks = writable({})
 
 export const bookmarkProgress = derived(

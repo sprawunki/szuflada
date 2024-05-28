@@ -9,7 +9,7 @@
 	--primary-color: #ddd;
 	--secondary-color: #d0dde9;
 	--tertiary-color: #edf0f8;
-	--accent-color: #003eff;
+	--accent-color: #07c;
 	--heading-color: rgba(0, 0, 0, 0.7);
 	--text-color: #111111;
 	--background-without-opacity: rgba(255, 255, 255, 0.7);
@@ -51,11 +51,16 @@ p {
 
 a {
 	color: var(--accent-color);
-	text-decoration: none;
+	text-decoration: underline;
 }
 
 a:hover {
 	text-decoration: underline;
+}
+
+a:focus {
+        background: var(--accent-color);
+        color: var(--pure-white)
 }
 
 h1 {

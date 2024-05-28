@@ -51,8 +51,8 @@
         productProgress.set(event.data.progress)
       }
 
-      if(event.data.result) {
-        products.set(Object.fromEntries((event.data.result['@graph'] ?? []).map(item => [item['@id'], item])))
+      if(event.data.hasOwnProperty('products')) {
+        products.set(Object.fromEntries((event.data.products['schema:demands'] ?? []).map(item => [item['@id'], item])))
       }
     }
 
@@ -90,7 +90,7 @@
       }
     })
 
-    remoteStorage.on("ready", () => {
+    remoteStorage.on("ready", async () => {
       const parsedUrl = new URL(window.location);
 
       const title = parsedUrl.searchParams.get('title');
@@ -109,7 +109,7 @@
 
       if (finalUrl) {
         console.log("SAVING", finalUrl)
-        remoteStorage['szuflada.app/bookmark'].save({
+        await remoteStorage['szuflada.app/bookmark'].save({
           "@id": `urn:uuid:${uuidv5(finalUrl, NS_BOOKMARK)}`,
           "@type": "http://www.w3.org/2002/01/bookmark#Bookmark",
           "http://purl.org/dc/elements/1.1/#created": new Date().toISOString(),
@@ -123,13 +123,13 @@
         })
       }
 
-      getTasks()
+      await getTasks()
         .then((allTasks: any) => {
             $tasks = { ...allTasks }
         })
         .then(() => getTaskList())
 
-      getBookmarks()
+      await getBookmarks()
         .then((allBookmarks: any) => {
             $bookmarks = { ...allBookmarks }
         })

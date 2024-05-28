@@ -18,13 +18,10 @@ const BookmarkSchema = {
       "format": "date-time",
     },
     "http://www.w3.org/2002/01/bookmark#title": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "@value": {
-            "type": "string"
-          },
+      "type": "object",
+      "properties": {
+        "@value": {
+           "type": "string",
         },
       },
     },
@@ -36,7 +33,7 @@ const BookmarkSchema = {
           "format": "url",
         },
       },
-    }
+    },
   },
   "required": [
     "@id",
@@ -44,6 +41,7 @@ const BookmarkSchema = {
     "http://purl.org/dc/elements/1.1/#created",
     "http://purl.org/dc/elements/1.1/#date",
     "http://www.w3.org/2002/01/bookmark#recalls",
+    "http://www.w3.org/2002/01/bookmark#title",
   ]
 }
 

@@ -6,7 +6,6 @@
 
     export let bookmark = {}
 
-    let bookmarkGraph
     let title = ''
     let url = ''
     let createdAt = ''

@@ -8,7 +8,7 @@
   import { remoteStorage } from '$lib/remotestorage.ts'
 
   const toggleStatus = (task) => {
-    if(task["https://szuflada.app/ns/status"] == "https://szuflada.app/ns/todo") {
+    if(task["https://szuflada.app/ns/status"] == "https://szuflada.app/ns/todo" || !task["https://szuflada.app/ns/status"]) {
         task["https://szuflada.app/ns/status"] = "https://szuflada.app/ns/done"
     } else {
         task["https://szuflada.app/ns/status"] = "https://szuflada.app/ns/todo"
@@ -28,8 +28,8 @@
   <Cycles />
   <ul class='tasklist'>
   {#each $taskList as task}
-  <li class="task" id={task["@id"]}>
-    <div class="task__title" class:blocked={task.blocked} class:done={task.done}>
+  <li class="task" id={task["@id"]} class:done={task.done}>
+    <div class="task__title" class:blocked={task.blocked}>
         <label>
             <input type="checkbox" on:change={toggleStatus(task)} checked={$tasks[task["@id"]].done} />
             <span>{task['https://szuflada.app/ns/summary']}</span>

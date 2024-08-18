@@ -6,12 +6,36 @@ spec:
   selector:
     matchLabels:
       app: szuflada
-  replicas: 1
+  replicas: 2
   template:
     metadata:
       labels:
         app: szuflada
     spec:
+      initContainers:
+      - name: copy-src
+        image: harbor.k8s.lan/sprawunki/szuflada:v0.1.0
+        command:
+        - /bin/bash
+        args:
+        - -c
+        - |
+          cp -a /app/* /src
+        volumeMounts:
+        - name: src
+          mountPath: /src
+        resources:
+          requests:
+            cpu: 125m
+            ephemeral-storage: 1Gi
+            memory: 256Mi
+          limits:
+            cpu: 125m
+            ephemeral-storage: 1Gi
+            memory: 256Mi
+        imagePullPolicy: Always
+        securityContext:
+          readOnlyRootFilesystem: true
       containers:
       - name: szuflada
         ports:
@@ -19,3 +43,19 @@ spec:
           $patch: delete
         - name: http
           containerPort: 5173
+        volumeMounts:
+        - name: src
+          mountPath: /app
+        resources:
+          requests:
+            cpu: 125m
+            ephemeral-storage: 1Gi
+            memory: 256Mi
+          limits:
+            cpu: 125m
+            ephemeral-storage: 1Gi
+            memory: 256Mi
+      volumes:
+      - name: src
+        emptyDir:
+          sizeLimit: 1Gi

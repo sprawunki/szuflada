@@ -1,12 +1,15 @@
+---
 apiVersion: v1
 kind: Service
 metadata:
   name: szuflada
   labels:
     app: szuflada
+    app.kubernetes.io/name: szuflada
 spec:
   selector:
     app: szuflada
+    app.kubernetes.io/name: szuflada
   ports:
   - name: http
     protocol: TCP
@@ -19,40 +22,57 @@ kind: Deployment
 metadata:
   name: szuflada
   labels:
+    app: szuflada
     app.kubernetes.io/name: szuflada
 spec:
   selector:
     matchLabels:
       app: szuflada
+      app.kubernetes.io/name: szuflada
   replicas: 3
   template:
     metadata:
       labels:
         app: szuflada
+        app.kubernetes.io/name: szuflada
     spec:
       securityContext:
-       runAsUser: 1000
+       runAsUser: 10000
+       runAsGroup: 10000
       containers:
       - name: szuflada
-        image: harbor.k8s.lan/sprawunki/szuflada
+        image: harbor.k8s.lan/sprawunki/szuflada:v0.1.0
+        imagePullPolicy: Always
         ports:
         - name: http
           containerPort: 80
         resources:
           requests:
-            memory: "128Mi"
             cpu: "50m"
+            ephemeral-storage: "128Mi"
+            memory: "128Mi"
+          limits:
+            cpu: "50m"
+            ephemeral-storage: "128Mi"
+            memory: "128Mi"
+        readinessProbe:
+          httpGet:
+            path: /szuflada/healthz
+            port: http
+        securityContext:
+          readOnlyRootFilesystem: true
       imagePullSecrets:
       - name: regcred
       terminationGracePeriodSeconds: 10
-      topologySpreadConstraints:
-      - maxSkew: 1
-        topologyKey: "kubernetes.io/hostname"
-        whenUnsatisfiable: DoNotSchedule
-        labelSelector:
-          matchLabels:
-            app.kubernetes.io/name: szuflada
-
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: szuflada
+              topologyKey: kubernetes.io/hostname
 ---
 apiVersion: policy/v1
 kind: PodDisruptionBudget
@@ -62,4 +82,19 @@ spec:
   minAvailable: 1
   selector:
     matchLabels:
-      app.kubernetes.io/name: szuflada
+      app: szuflada
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: szuflada
+spec:
+  podSelector:
+    matchLabels:
+      app: szuflada
+  ingress:
+  - {}
+  policyTypes:
+  - Ingress
+  - Egress

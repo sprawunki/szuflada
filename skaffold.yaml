@@ -34,3 +34,8 @@ profiles:
       kustomize:
         paths:
           - deploy/overlays/dev
+portForward:
+  - resourceType: service
+    resourceName: szuflada
+    port:  80
+    localPort: 5173

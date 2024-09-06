@@ -2,6 +2,70 @@ pipeline {
   agent none
 
   stages {
+    stage('lint') {
+      agent {
+        kubernetes {
+          yaml '''
+            spec:
+              containers:
+              - name: jnlp
+                image: 'harbor.k8s.lan/smol/jenkins-inbound-agent'
+                args: ['\$(JENKINS_SECRET)', '\$(JENKINS_NAME)']
+              - name: kube-score
+                image: zegl/kube-score:v1.18.0
+                command:
+                - sleep
+                args:
+                - 99d
+              - name: hadolint
+                image: hadolint/hadolint:v2.12.0-alpine
+                command:
+                - sleep
+                args:
+                - 99d
+          '''
+        } // kubernetes
+      } // agent
+
+      steps {
+        container('kube-score') {
+          sh '''
+            for FILE in $(find . -name "kustomization.yaml");
+            do
+              kustomize build $(dirname $FILE) \
+              | kube-score score -vvv --kubernetes-version v1.21 -o sarif - \
+              > "test-results/$(echo $FILE | awk -F'/' '{ print $(NF-1) }').json" \
+              || true
+            done
+          '''
+        } // container 'kube-score'
+
+        container('hadolint') {
+          sh '''
+            hadolint --format sarif --no-fail Dockerfile > test-results/hadolint.json
+          '''
+        } // container 'hadolint'
+      } // steps
+
+      post {
+        always {
+          discoverGitReferenceBuild \
+            targetBranch: 'main'
+
+          recordIssues \
+            aggregatingResults: true,
+            enabledForFailure: false,
+            qualityGates: [
+              [integerThreshold: 1, threshold: 1.0, type: 'TOTAL']
+            ],
+            sourceCodeRetention: 'LAST_BUILD',
+            tools: [
+              sarif(pattern: 'test-results/**/*.json')
+           ]
+        } // always
+      } // post
+    } // stage 'lint'
+
     stage('build') {
       agent {
         kubernetes {
@@ -30,12 +94,12 @@ pipeline {
                         - key: .dockerconfigjson
                           path: config.json
           '''
-        }
-      }
+        } // kubernetes
+      } // agent
 
       environment {
         GIT_REPO_NAME = "${GIT_URL}".replaceFirst(/^.*?(?::\/\/.*?\/|:)(.*?)(\.git)?$/, '$1')
-      }
+      } // environment
 
       steps {
         container('kaniko') {
@@ -50,59 +114,7 @@ pipeline {
         } // container 'kaniko'
       } // steps
     } // stage 'build'
-
-    stage('kube-score') {
-      agent {
-        kubernetes {
-          yaml '''
-            spec:
-              containers:
-              - name: jnlp
-                image: 'harbor.k8s.lan/smol/jenkins-inbound-agent'
-                args: ['\$(JENKINS_SECRET)', '\$(JENKINS_NAME)']
-              - name: kube-score
-                image: zegl/kube-score:v1.18.0
-                command:
-                - sleep
-                args:
-                - 99d
-          '''
-        }
-      }
-
-      steps {
-        container('kube-score') {
-            sh '''
-              mkdir -p test-results
-              for FILE in $(find . -name "kustomization.yaml");
-              do
-                kustomize build $(dirname $FILE) \
-                | kube-score score -vvv --kubernetes-version v1.21 -o sarif - \
-                > "test-results/$(echo $FILE | awk -F'/' '{ print $(NF-1) }').json" \
-                || true
-              done
-            '''
-        }
-      }
-
-      post {
-        always {
-          discoverGitReferenceBuild()
-
-          recordIssues \
-            aggregatingResults: true,
-            enabledForFailure: false,
-            qualityGates: [
-              [integerThreshold: 1, threshold: 1.0, type: 'TOTAL']
-            ],
-            sourceCodeRetention: 'LAST_BUILD',
-            tools: [
-              sarif(pattern: 'test-results/**/*.json')
-           ]
-        }
-      }
-    }
-  }
+  } // stages
 
   post {
     success {
@@ -112,7 +124,7 @@ pipeline {
           'Verified': 1
         ],
         message: "${env.BUILD_URL}"
-    }
+    } // success
 
     unstable {
       gerritReview \
@@ -121,7 +133,7 @@ pipeline {
           'Verified': 0
         ],
         message: "${env.BUILD_URL}"
-    }
+    } // unstable
 
     failure {
       gerritReview \
@@ -130,6 +142,6 @@ pipeline {
           'Verified': -1
         ],
         message: "${env.BUILD_URL}"
-    }
-  }
-}
+    } // failure
+  } // post
+} // pipeline

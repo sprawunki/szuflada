@@ -26,7 +26,7 @@ FROM build AS build-prod
 
 RUN npm run build
 
-FROM caddy as app
+FROM caddy:2.9.1 as app
 
 USER 1000
 

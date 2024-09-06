@@ -105,24 +105,27 @@ pipeline {
       gerritReview \
         labels: [
           'Code-Review': 0,
-          Verified: 1
-        ]
+          'Verified': 1
+        ],
+	message: "${env.BUILD_URL}"
     }
 
     unstable {
       gerritReview \
         labels: [
           'Code-Review': -1,
-          Verified: 0
-        ]
+          'Verified': 0
+        ],
+	message: "${env.BUILD_URL}"
     }
 
     failure {
       gerritReview \
         labels: [
           'Code-Review': -1,
-          Verified: -1
-        ]
+          'Verified': -1
+        ],
+	message: "${env.BUILD_URL}"
     }
   }
 }

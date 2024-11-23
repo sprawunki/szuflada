@@ -9,11 +9,12 @@ const config = {
 
 	kit: {
 		paths: {
-			base: "/szuflada",
+			base: '/szuflada',
+			relative: false
 		},
 		adapter: adapter({
 			pages: 'build',
-			assets: 'build',
+			assets: 'build'
 		})
 	}
 };

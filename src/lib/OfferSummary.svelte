@@ -15,7 +15,7 @@
         const url = new URL(offer['schema:url'].replace(/^(http[s]?:)?\/\//i, 'https://'))
         urlHost = url.host
         fullUrl = url.toString()
-        price = offer['schema:price'] ? parseFloat(offer['schema:price']).toLocaleString(undefined, { style: "currency", currencyDisplay: "code", currency: offer['schema:priceCurrency']}) : '–⁠'
+        price = offer['schema:price'] ? parseFloat(offer['schema:price']).toLocaleString(undefined, { style: "currency", currencyDisplay: "code", currency: offer['schema:priceCurrency'].trim()}) : '–⁠'
 
         if (offer['schema:price'] < expectedPrices['average'] - expectedPrices['stdDev']) {
             priceRange = "cheap"

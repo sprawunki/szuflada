@@ -10,15 +10,15 @@
     let url = ''
     let createdAt = ''
 
-    $:  title = bookmark['http://www.w3.org/2002/01/bookmark#title'] ?
+    $: title = bookmark['http://www.w3.org/2002/01/bookmark#title'] ?
             Array.isArray(bookmark['http://www.w3.org/2002/01/bookmark#title']) ?
                 bookmark['http://www.w3.org/2002/01/bookmark#title'][0]['@value'] :
                 bookmark['http://www.w3.org/2002/01/bookmark#title']['@value'] :
             '...'
-        url = bookmark['http://www.w3.org/2002/01/bookmark#recalls'] ?
+    $: url = bookmark['http://www.w3.org/2002/01/bookmark#recalls'] ?
             new URL(bookmark['http://www.w3.org/2002/01/bookmark#recalls']['@id']).toString() :
             '...'
-        createdAt = bookmark['http://purl.org/dc/elements/1.1/#created'] ?
+    $: createdAt = bookmark['http://purl.org/dc/elements/1.1/#created'] ?
             bookmark['http://purl.org/dc/elements/1.1/#created'] :
             null
 </script>

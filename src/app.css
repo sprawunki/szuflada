@@ -1,108 +1,101 @@
-@import '@fontsource/fira-mono';
+@import "@fontsource/fira-mono";
 
 :root {
-	font-family: Arial, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu,
-		Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-	font-size: 16px;
-	--font-mono: 'Fira Mono', monospace;
-	--pure-white: #ffffff;
-	--primary-color: #ddd;
-	--secondary-color: #d0dde9;
-	--tertiary-color: #edf0f8;
-	--accent-color: #07c;
-	--heading-color: rgba(0, 0, 0, 0.7);
-	--text-color: #111111;
-	--background-without-opacity: rgba(255, 255, 255, 0.7);
-	--column-width: 42rem;
-	--column-margin-top: 4rem;
+  --primary-color-light: rgba(0, 191, 191, 1);
+  --primary-color-dark: rgba(0, 63, 63, 1);
+  color-scheme: light dark;
+  --primary-color: light-dark(
+    var(--primary-color-dark),
+    var(--primary-color-light)
+  );
+  --accent-color: light-dark(
+    var(--primary-color-light),
+    var(--primary-color-dark)
+  );
+  --background-color: light-dark(black, white);
+  --foreground-color: light-dark(white, black);
+  --gray: #777;
+  --delicate-gray: rgba(127, 127, 127, 0.35);
+  --slight-shade: rgba(127, 127, 127, 0.1);
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
 }
 
 body {
-	min-height: 100vh;
-	margin: 0;
-	background-color: var(--primary-color);
-	color: var(--text-color);
+  margin: 0;
+  background-color: var(--background-color);
+  color: var(--foreground-color);
+  font-family: sans;
+  font-size: 18px;
+  line-height: 22px;
 }
 
-body > div {
-	height: 100vh;
-	display: flex;
-	flex-direction: column;
-	justify-content: space-between;
-}
-
-#svelte {
-	min-height: 100vh;
-	width: 100%;
-	display: flex;
-	flex-direction: column;
-}
-
-h1,
-h2,
-p {
-	font-weight: 400;
-	color: var(--heading-color);
-}
-
-p {
-	line-height: 1.5;
+#app {
+  display: flex;
+  flex-direction: column;
 }
 
 a {
-	color: var(--accent-color);
-	text-decoration: underline;
+  color: var(--accent-color);
+  text-decoration: underline;
 }
 
 a:hover {
-	text-decoration: underline;
+  color: var(--background-color);
+  background-color: var(--accent-color);
+  text-decoration: underline;
 }
 
 a:focus {
-        background: var(--accent-color);
-        color: var(--pure-white)
+  background: var(--accent-color);
+  color: var(--foreground-color);
+}
+
+hgroup,
+h1,
+h2,
+h3,
+p {
+  font-size: 1rem;
+  line-height: 1rlh;
+  margin: 0.5rlh 0;
 }
 
 h1 {
-	font-size: 2rem;
-	text-align: center;
+  text-align: center;
 }
 
-h2 {
-	font-size: 1rem;
+h3 {
+  font-style: italic;
 }
 
 pre {
-	font-size: 16px;
-	font-family: var(--font-mono);
-	background-color: rgba(255, 255, 255, 0.45);
-	border-radius: 3px;
-	box-shadow: 2px 2px 6px rgb(255 255 255 / 25%);
-	padding: 0.5em;
-	overflow-x: auto;
-	color: var(--text-color);
+  font-size: 16px;
+  font-family: monospace;
+  background-color: rgba(255, 255, 255, 0.45);
+  border-radius: 3px;
+  box-shadow: 2px 2px 6px rgb(255 255 255 / 25%);
+  padding: 1lh;
+  overflow-x: auto;
+  color: var(--foreground-color);
 }
 
 input,
 button {
-	font-size: inherit;
-	font-family: inherit;
-}
-
-button:focus:not(:focus-visible) {
-	outline: none;
+  font-size: inherit;
+  font-family: inherit;
 }
 
 .container {
-	width: 740px;
-	max-width: 100%;
-	box-sizing: border-box;
-	margin: 0 auto;
-	padding: 0 0.5rem;
-}
-
-@media (min-width: 720px) {
-	h1 {
-		font-size: 2.4rem;
-	}
+  width: 740px;
+  max-width: 100%;
+  box-sizing: border-box;
+  margin: 0 auto;
+  padding: 0 0.5rlh;
 }

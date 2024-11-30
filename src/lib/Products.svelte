@@ -1,35 +1,31 @@
 <script lang="ts">
-  import { base } from "$app/paths"
-  import { productList, productProgress } from '$lib/store'
-  import Product from '$lib/Product.svelte'
+  import { base } from "$app/paths";
+  import { productList, productProgress } from "$lib/store";
+  import Product from "$lib/Product.svelte";
+  import Progress from "$lib/Progress.svelte";
 </script>
 
 <div class="products">
-  <div class="progress">
-    <div class="progressBar" style={`width: ${$productProgress*100}%; transition: width ${+!!$productProgress}s;`}></div>
-  </div>
+  <header>
+    <h1>Products ({$productList.length})</h1>
 
-  <h2>Products ({$productList.length})</h2>
+    <Progress progress={$productProgress} />
+  </header>
 
   <ul class="productlist">
-  {#each $productList as product}
-    <Product product={product}/>
-  {/each}
-</ul>
+    {#each $productList as product}
+      <Product {product} />
+    {/each}
+  </ul>
 </div>
 
 <style>
-  .progressBar {
-    background: #0cc;
-    height: 0.125rem;
-  }
-
-  .progress {
+  header {
     position: sticky;
     top: 0;
-    right: 0;
-    left: 0;
-    background: #077;
+    overflow: hidden;
+    background: var(--background-color);
+    z-index: 1;
   }
 
   th {

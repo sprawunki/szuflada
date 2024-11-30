@@ -140,7 +140,7 @@
   .product {
     padding: 0.5lh;
     margin: 0.5lh 0;
-    background: var(--delicate-gray);
+    background: var(--slight-shade);
   }
 
   .product h3 {

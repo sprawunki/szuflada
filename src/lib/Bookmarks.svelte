@@ -1,43 +1,38 @@
 <script lang="ts">
-  import { base } from "$app/paths"
-  import { bookmarkList, bookmarkProgress } from '$lib/store'
-  import Bookmark from '$lib/Bookmark.svelte'
+  import { base } from "$app/paths";
+  import { bookmarkList, bookmarkProgress } from "$lib/store";
+  import Bookmark from "$lib/Bookmark.svelte";
+  import Progress from "$lib/Progress.svelte";
 </script>
 
 <div class="bookmarks">
-  <div class="progress">
-    <div class="progressBar" style={`width: ${$bookmarkProgress*100}%; transition: width ${+!!$bookmarkProgress}s;`}></div>
-  </div>
+  <header>
+    <h1>Bookmarks ({$bookmarkList.length})</h1>
 
-  <h2>Bookmarks ({$bookmarkList.length})</h2>
+    <Progress progress={$bookmarkProgress} />
+  </header>
 
-  <div class='bookmarklist'>
-  {#each $bookmarkList as bookmark}
-  <div id={bookmark['@id']}>
-    <Bookmark bookmark={bookmark} />
-  </div>
-  {/each}
+  <div class="bookmarklist">
+    {#each $bookmarkList as bookmark}
+      <div id={bookmark["@id"]}>
+        <Bookmark {bookmark} />
+      </div>
+    {/each}
   </div>
 </div>
 
 <style>
-  .progressBar {
-    background: #0cc;
-    height: 0.125rem;
-  }
-
-  .progress {
+  header {
     position: sticky;
     top: 0;
-    right: 0;
-    left: 0;
-    background: #077;
+    overflow: hidden;
+    background: var(--background-color);
+    z-index: 1;
   }
 
   .bookmarks {
-    max-width: 100%;
-    overflow-wrap: break-word;
-    padding: 0 0 1.5rem;
+    margin: 0;
+    padding: 0;
   }
 
   .bookmarks a {

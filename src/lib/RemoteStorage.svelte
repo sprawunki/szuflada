@@ -13,6 +13,8 @@
   import { bookmarks, tasks, productProgress, products } from "$lib/store";
   import * as jsonld from "jsonld";
 
+  import search from "$lib/search";
+
   import { v5 as uuidv5 } from "uuid";
   const NS_BOOKMARK = uuidv5("https://szuflada.app/bookmark/", uuidv5.URL);
 
@@ -61,6 +63,20 @@
     remoteStorage["szuflada.app/bookmark"]
       .getPrivateClient()
       .on("change", (event: any) => {
+        if (event.newValue) {
+          search.add({
+            "@id": event.newValue["@id"],
+            title:
+              event.newValue["http://www.w3.org/2002/01/bookmark#title"][
+                "@value"
+              ],
+            recalls:
+              event.newValue["http://www.w3.org/2002/01/bookmark#recalls"][
+                "@id"
+              ],
+          });
+        }
+
         if (event.origin !== "local") {
           bookmarks.update((bookmark) => {
             if (event.oldValue && event.oldValue["@id"]) {

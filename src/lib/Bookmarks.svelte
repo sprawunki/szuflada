@@ -1,19 +1,20 @@
 <script lang="ts">
-  import { base } from "$app/paths";
-  import { bookmarkList, bookmarkProgress } from "$lib/store";
+  import { bookmarkProgress, bookmarksFiltered } from "$lib/store";
   import Bookmark from "$lib/Bookmark.svelte";
   import Progress from "$lib/Progress.svelte";
+  import Search from "$lib/Search.svelte";
 </script>
 
 <div class="bookmarks">
   <header>
-    <h1>Bookmarks ({$bookmarkList.length})</h1>
+    <h1>Bookmarks ({$bookmarksFiltered.length})</h1>
 
+    <Search />
     <Progress progress={$bookmarkProgress} />
   </header>
 
   <div class="bookmarklist">
-    {#each $bookmarkList as bookmark}
+    {#each $bookmarksFiltered as bookmark}
       <div id={bookmark["@id"]}>
         <Bookmark {bookmark} />
       </div>

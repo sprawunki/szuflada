@@ -1,15 +1,16 @@
 <script>
   import { default as moment } from "moment";
+  import Lazy from "svelte-lazy";
+  import { bookmarks } from "$lib/store";
 
-  import * as jsonld from "jsonld";
-  import { bookmarkContext } from "$lib/jsonld/contexts";
+  export let id;
 
-  export let bookmark = {};
-
+  let bookmark;
   let title = "";
   let url = "";
   let createdAt = "";
 
+  $: bookmark = $bookmarks[id];
   $: title = bookmark["http://www.w3.org/2002/01/bookmark#title"]
     ? Array.isArray(bookmark["http://www.w3.org/2002/01/bookmark#title"])
       ? bookmark["http://www.w3.org/2002/01/bookmark#title"][0]["@value"]
@@ -26,31 +27,33 @@
 </script>
 
 <article class="bookmark">
-  <h1 class="bookmark__title">
-    {title}
-  </h1>
-  <span class="bookmark__meta">
-    {#if createdAt}
-      <span>created</span>
-      <span title={moment(createdAt).calendar()}
-        >{moment(createdAt).fromNow()}</span
-      >
-    {:else}
-      <span>...</span>
-    {/if}
-  </span>
-  <ul class="bookmark__actions">
-    <li class="action">
-      <a
-        class="action__visit"
-        target="_blank"
-        rel="noreferrer noopener"
-        href={url}
-      >
-        {url}
-      </a>
-    </li>
-  </ul>
+  <Lazy height="4lh">
+    <h1 class="bookmark__title">
+      {title}
+    </h1>
+    <span class="bookmark__meta">
+      {#if createdAt}
+        <span>created</span>
+        <span title={moment(createdAt).calendar()}
+          >{moment(createdAt).fromNow()}</span
+        >
+      {:else}
+        <span>...</span>
+      {/if}
+    </span>
+    <ul class="bookmark__actions">
+      <li class="action">
+        <a
+          class="action__visit"
+          target="_blank"
+          rel="noreferrer noopener"
+          href={url}
+        >
+          {url}
+        </a>
+      </li>
+    </ul>
+  </Lazy>
 </article>
 
 <style>

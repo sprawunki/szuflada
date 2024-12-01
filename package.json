@@ -48,6 +48,7 @@
 	},
 	"type": "module",
 	"dependencies": {
-		"flexsearch": "^0.7.43"
+		"flexsearch": "^0.7.43",
+		"svelte-lazy": "^1.2.11"
 	}
 }

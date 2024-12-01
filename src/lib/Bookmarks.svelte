@@ -16,7 +16,7 @@
   <div class="bookmarklist">
     {#each $bookmarksFiltered as bookmark}
       <div id={bookmark["@id"]}>
-        <Bookmark {bookmark} />
+        <Bookmark id={bookmark["@id"]} />
       </div>
     {/each}
   </div>

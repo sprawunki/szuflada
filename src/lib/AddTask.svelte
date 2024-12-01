@@ -49,8 +49,8 @@
     right: 0;
     bottom: 0;
     left: 0;
-    background: #ccc;
-    margin: 0 -0.5rem;
+    background: var(--background-color);
+    margin: 0;
   }
   input[type="text"],
   textarea {

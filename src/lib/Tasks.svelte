@@ -30,10 +30,10 @@
     </h1>
 
     <Progress progress={$taskProgress} />
+    <CompareTasks />
+    <Cycles />
   </header>
 
-  <CompareTasks />
-  <Cycles />
   <ul class="tasklist">
     {#each $taskList as task}
       <li class="task" id={task["@id"]} class:done={task.done}>
@@ -84,12 +84,12 @@
   }
 
   ul {
-    padding: 0 0.5rem;
+    padding: 0;
     margin: 0;
   }
 
   li {
-    padding: 0.5lh 0;
+    padding: 0.5lh;
     margin: 0.5lh 0;
     list-style: none;
     background: var(--slight-shade);

@@ -1,25 +1,34 @@
 <script lang="ts">
+  import { page } from "$app/stores";
   import { bookmarkProgress, bookmarksFiltered } from "$lib/store";
   import Bookmark from "$lib/Bookmark.svelte";
   import Progress from "$lib/Progress.svelte";
   import Search from "$lib/Search.svelte";
+
+  let hash;
+
+  $: hash = $page.url.hash.replace(/^#/, "");
 </script>
 
 <div class="bookmarks">
-  <header>
-    <h1>Bookmarks ({$bookmarksFiltered.length})</h1>
+  {#if hash.match(/^urn:uuid:/)}
+    <Bookmark id={hash} />
+  {:else}
+    <header>
+      <h1>Bookmarks ({$bookmarksFiltered.length})</h1>
 
-    <Search />
-    <Progress progress={$bookmarkProgress} />
-  </header>
+      <Search />
+      <Progress progress={$bookmarkProgress} />
+    </header>
 
-  <div class="bookmarklist">
-    {#each $bookmarksFiltered as bookmark}
-      <div id={bookmark["@id"]}>
-        <Bookmark id={bookmark["@id"]} />
-      </div>
-    {/each}
-  </div>
+    <div class="bookmarklist">
+      {#each $bookmarksFiltered as bookmark}
+        <div id={bookmark["@id"]}>
+          <Bookmark id={bookmark["@id"]} />
+        </div>
+      {/each}
+    </div>
+  {/if}
 </div>
 
 <style>

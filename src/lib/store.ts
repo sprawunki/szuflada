@@ -22,16 +22,26 @@ export const bookmarkProgress = derived(
     Object.values($bookmarks).length,
 );
 
-export const bookmarkList = derived(bookmarks, ($bookmarks) =>
-  Object.values($bookmarks).sort((a: any, b: any) =>
-    a.hasOwnProperty("http://purl.org/dc/elements/1.1/#created") &&
-    b.hasOwnProperty("http://purl.org/dc/elements/1.1/#created")
-      ? b["http://purl.org/dc/elements/1.1/#created"].localeCompare(
-          a["http://purl.org/dc/elements/1.1/#created"],
-        )
-      : b.hasOwnProperty("http://purl.org/dc/elements/1.1/#created") -
-        a.hasOwnProperty("http://purl.org/dc/elements/1.1/#created"),
-  ),
+export const bookmarkList = derived(
+  bookmarks,
+  ($bookmarks, set) => {
+    const t = setTimeout(() => {
+      return set(
+        Object.values($bookmarks).sort((a: any, b: any) =>
+          a.hasOwnProperty("http://purl.org/dc/elements/1.1/#created") &&
+          b.hasOwnProperty("http://purl.org/dc/elements/1.1/#created")
+            ? b["http://purl.org/dc/elements/1.1/#created"].localeCompare(
+                a["http://purl.org/dc/elements/1.1/#created"],
+              )
+            : b.hasOwnProperty("http://purl.org/dc/elements/1.1/#created") -
+              a.hasOwnProperty("http://purl.org/dc/elements/1.1/#created"),
+        ),
+      );
+    }, 100);
+
+    return () => clearTimeout(t);
+  },
+  [],
 );
 
 export const searchQuery = writable("");

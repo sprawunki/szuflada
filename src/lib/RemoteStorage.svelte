@@ -1,5 +1,7 @@
 <script lang="ts">
   import { onMount, onDestroy } from "svelte";
+  import { goto } from "$app/navigation";
+  import { base } from "$app/paths";
   import {
     connect,
     disconnect,
@@ -144,6 +146,10 @@
           "http://www.w3.org/2002/01/bookmark#recalls": {
             "@id": finalUrl,
           },
+        });
+
+        goto(`${base}/#urn:uuid:${uuidv5(finalUrl, NS_BOOKMARK)}`, {
+          replaceState: true,
         });
       }
 

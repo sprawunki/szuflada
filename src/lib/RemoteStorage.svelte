@@ -2,23 +2,11 @@
   import { onMount, onDestroy } from "svelte";
   import { goto } from "$app/navigation";
   import { base } from "$app/paths";
-  import {
-    connect,
-    disconnect,
-    remoteStorage,
-    getBookmarks,
-    getBookmarkList,
-    getTasks,
-    getTaskList,
-  } from "$lib/remotestorage.ts";
+  import { connect, disconnect, remoteStorage } from "$lib/remotestorage.ts";
 
   import { bookmarks, tasks, productProgress, products } from "$lib/store";
-  import * as jsonld from "jsonld";
 
   import search from "$lib/search";
-
-  import { v5 as uuidv5 } from "uuid";
-  const NS_BOOKMARK = uuidv5("https://szuflada.app/bookmark/", uuidv5.URL);
 
   const workers = {};
 
@@ -109,46 +97,6 @@
           return task;
         });
       });
-
-    remoteStorage.on("ready", async () => {
-      const parsedUrl = new URL(window.location);
-
-      const title = parsedUrl.searchParams.get("title");
-      const text = parsedUrl.searchParams.get("text");
-      const url = parsedUrl.searchParams.get("url");
-
-      const getUrlFromCandidate = (candidate) => {
-        try {
-          return new URL(candidate).toString();
-        } catch (e) {
-          return null;
-        }
-      };
-
-      const finalUrl = getUrlFromCandidate(url) || getUrlFromCandidate(text);
-
-      if (finalUrl) {
-        console.log("SAVING", finalUrl);
-        await remoteStorage["szuflada.app/bookmark"].save({
-          "@id": `urn:uuid:${uuidv5(finalUrl, NS_BOOKMARK)}`,
-          "@type": "http://www.w3.org/2002/01/bookmark#Bookmark",
-          "http://purl.org/dc/elements/1.1/#created": new Date().toISOString(),
-          "http://purl.org/dc/elements/1.1/#date": new Date().toISOString(),
-          "http://www.w3.org/2002/01/bookmark#title": [
-            {
-              "@value": title,
-            },
-          ],
-          "http://www.w3.org/2002/01/bookmark#recalls": {
-            "@id": finalUrl,
-          },
-        });
-
-        goto(`${base}/#urn:uuid:${uuidv5(finalUrl, NS_BOOKMARK)}`, {
-          replaceState: true,
-        });
-      }
-    });
   });
 
   onDestroy(() => {

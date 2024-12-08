@@ -18,7 +18,7 @@
     "client_mode": ["navigate-existing", "auto"]
   },
   "share_target": {
-    "action": "/szuflada/",
+    "action": "/szuflada/new/",
     "params": {
       "title": "title",
       "text": "text",

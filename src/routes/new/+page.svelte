@@ -11,6 +11,7 @@
   let title: string | null = "";
   let text: string | null = "";
   let url: string | null = "";
+  let finalUrl: string | null = "";
 
   onMount(async () => {
     if (!browser) {
@@ -30,7 +31,7 @@
       }
     };
 
-    const finalUrl = getUrlFromCandidate(url) || getUrlFromCandidate(text);
+    finalUrl = getUrlFromCandidate(url) || getUrlFromCandidate(text);
 
     if (finalUrl) {
       console.log("SAVING", finalUrl);
@@ -61,17 +62,30 @@
 <div>
   <h1>New bookmark</h1>
   <article>
-    <h2>{title}</h2>
-    <p>{url}</p>
+    <p>
+      Saving <strong>{title}</strong> from <em>&lt;{finalUrl}&gt;</em>
+    </p>
   </article>
+  <p>This should only take a moment...</p>
 </div>
 
 <style>
   h1 {
-    justify-self: flex-start;
+    text-align: center;
   }
+
   article {
     background: var(--slight-shade);
     padding: 1lh;
+  }
+
+  p {
+    text-align: center;
+  }
+
+  em,
+  strong {
+    display: block;
+    margin: 0.5lh 0;
   }
 </style>

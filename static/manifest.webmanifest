@@ -24,5 +24,19 @@
       "text": "text",
       "url": "url"
     }
-  }
+  },
+  "shortcuts": [
+    {
+      "name": "View bookmarks",
+      "short_name": "Bookmarks",
+      "description": "View your bookmarks",
+      "url": "/szuflada/"
+    },
+    {
+      "name": "View tasks",
+      "short_name": "Tasks",
+      "description": "View your tasks",
+      "url": "/szuflada/tasks/"
+    }
+  ]
 }

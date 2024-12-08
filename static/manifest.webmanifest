@@ -14,6 +14,9 @@
   "scope": "/szuflada/",
   "theme_color": "#007F7F",
   "description": "Szuflada is here to store your bookmarks",
+  "launch_handler": {
+    "client_mode": ["navigate-existing", "auto"]
+  },
   "share_target": {
     "action": "/szuflada/",
     "params": {

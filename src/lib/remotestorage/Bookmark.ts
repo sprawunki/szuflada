@@ -1,57 +1,96 @@
-import RemoteStorage from 'remotestoragejs'
-import BookmarkSchema from '$lib/remotestorage/schema/Bookmark'
-import { v5 as uuidv5 } from 'uuid'
-import * as jsonld from 'jsonld'
+import RemoteStorage from "remotestoragejs";
+import BookmarkSchema from "$lib/remotestorage/schema/Bookmark";
+import { v5 as uuidv5 } from "uuid";
+import * as jsonld from "jsonld";
 
 const Bookmark = {
-  name: 'szuflada.app/bookmark',
-  builder: function(privateClient: any, publicClient: any) {
-    privateClient.declareType('Bookmark', BookmarkSchema)
-    privateClient.cache('', 'ALL')
+  name: "szuflada.app/bookmark",
+  builder: function (privateClient: any, publicClient: any) {
+    privateClient.declareType("Bookmark", BookmarkSchema);
+    privateClient.cache("", "ALL");
+
+    privateClient.on("change", (event) => {
+      if (event.path === "conflict") {
+        privateClient.getObject(
+          event.path.replace("/szuflada.app/bookmark/", ""),
+        );
+      }
+
+      document.dispatchEvent(
+        new CustomEvent("bookmark", { detail: event.newValue }),
+      );
+
+      document.dispatchEvent(
+        new CustomEvent(event.path.replace("/szuflada.app/bookmark/", ""), {
+          detail: event.newValue,
+        }),
+      );
+    });
 
     return {
       exports: {
         getPrivateClient: () => privateClient,
         save: (objectData: any) => {
           return privateClient
-            .getObject(objectData['@id'])
-            .then(object => {
-              if (object && object['http://purl.org/dc/elements/1.1/#created']) {
-                objectData['http://purl.org/dc/elements/1.1/#created'] = object['http://purl.org/dc/elements/1.1/#created']
+            .getObject(objectData["@id"])
+            .then((object) => {
+              if (
+                object &&
+                object["http://purl.org/dc/elements/1.1/#created"]
+              ) {
+                objectData["http://purl.org/dc/elements/1.1/#created"] =
+                  object["http://purl.org/dc/elements/1.1/#created"];
               }
 
-              if (Array.isArray(objectData['http://purl.org/dc/elements/1.1/#created'])) {
-                objectData['http://purl.org/dc/elements/1.1/#created'] = objectData['http://purl.org/dc/elements/1.1/#created'][0]['@value']
+              if (
+                Array.isArray(
+                  objectData["http://purl.org/dc/elements/1.1/#created"],
+                )
+              ) {
+                objectData["http://purl.org/dc/elements/1.1/#created"] =
+                  objectData["http://purl.org/dc/elements/1.1/#created"][0][
+                    "@value"
+                  ];
               }
 
-              if (Array.isArray(objectData['http://www.w3.org/2002/01/bookmark#title'])) {
-                objectData['http://www.w3.org/2002/01/bookmark#title'] = objectData['http://www.w3.org/2002/01/bookmark#title'][0]
+              if (
+                Array.isArray(
+                  objectData["http://www.w3.org/2002/01/bookmark#title"],
+                )
+              ) {
+                objectData["http://www.w3.org/2002/01/bookmark#title"] =
+                  objectData["http://www.w3.org/2002/01/bookmark#title"][0];
               }
 
-              if (typeof objectData['http://www.w3.org/2002/01/bookmark#title'] == 'string') {
-                objectData['http://www.w3.org/2002/01/bookmark#title'] = {
-                  '@value': objectData['http://www.w3.org/2002/01/bookmark#title']
-                }
+              if (
+                typeof objectData["http://www.w3.org/2002/01/bookmark#title"] ==
+                "string"
+              ) {
+                objectData["http://www.w3.org/2002/01/bookmark#title"] = {
+                  "@value":
+                    objectData["http://www.w3.org/2002/01/bookmark#title"],
+                };
               }
 
-              return objectData
+              return objectData;
             })
-            .then(objectData => privateClient
-              .storeObject("Bookmark", `${objectData['@id']}`, objectData)
+            .then((objectData) =>
+              privateClient.storeObject(
+                "Bookmark",
+                `${objectData["@id"]}`,
+                objectData,
+              ),
             )
-            .then((result: any) => privateClient
-              .getObject(`${objectData['@id']}`, false)
-            )
+            .then((result: any) =>
+              privateClient.getObject(`${objectData["@id"]}`, false),
+            );
         },
-        get: (uuid: any) => privateClient
-          .getObject(uuid),
-        getAll: () => privateClient
-          .getAll('', false),
-        getListing: () => privateClient
-          .getListing('', 0)
-      }
-    }
-  }
-}
+        get: (uuid: string) => privateClient.getObject(uuid, false),
+        getListing: () => privateClient.getListing("", false),
+        del: (uuid) => privateClient.remove(uuid),
+      },
+    };
+  },
+};
 
-export default Bookmark
+export default Bookmark;

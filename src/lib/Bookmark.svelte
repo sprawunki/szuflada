@@ -1,4 +1,5 @@
 <script>
+  import { base } from "$app/paths";
   import { default as moment } from "moment";
   import Lazy from "svelte-lazy";
   import { bookmarks } from "$lib/store";
@@ -31,9 +32,11 @@
 
 <article class="bookmark">
   <Lazy height="4lh">
-    <h1 class="bookmark__title">
-      {title}
-    </h1>
+    <a href={`${base}#${id}`} class:loading={title == "..."}>
+      <h1 class="bookmark__title">
+        {title}
+      </h1>
+    </a>
     <span class="bookmark__meta">
       {#if createdAt}
         <span>created</span>

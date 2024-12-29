@@ -1,9 +1,11 @@
 <script lang="ts">
   import { page } from "$app/stores";
-  import { bookmarksFiltered } from "$lib/store";
+  import { bookmarkList, bookmarksFiltered } from "$lib/store";
   import { deleteBookmark } from "$lib/remotestorage";
   import Bookmark from "$lib/Bookmark.svelte";
   import Search from "$lib/Search.svelte";
+  import ListItem from "./ListItem.svelte";
+  import { navigating } from "$app/stores";
 
   let hash;
 
@@ -21,14 +23,16 @@
     </div>
   {:else}
     <header>
-      <h1>Bookmarks ({$bookmarksFiltered.length})</h1>
+      <h1>Bookmarks ({$bookmarksFiltered.length} of {$bookmarkList.length})</h1>
     </header>
 
     <div class="bookmarklist">
-      {#each $bookmarksFiltered as bookmark}
-        <div id={bookmark["@id"]}>
-          <Bookmark id={bookmark["@id"]} />
-        </div>
+      {#each $bookmarksFiltered as id}
+        <ListItem>
+          <div {id}>
+            <Bookmark {id} />
+          </div>
+        </ListItem>
       {/each}
     </div>
 

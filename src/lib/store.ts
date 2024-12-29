@@ -2,46 +2,109 @@ import { default as moment } from "moment";
 import { writable, derived } from "svelte/store";
 import graphlib from "@dagrejs/graphlib";
 const { Graph, alg } = graphlib;
-import { v5 as uuidv5 } from "uuid";
+
+import jsonld from "$lib/jsonld/jsonld";
+import { bookmarkContext } from "$lib/jsonld/contexts";
 
 import search from "$lib/search";
-
-const initTimestamp = +new Date();
-
-const NS_BOOKMARK = uuidv5("https://szuflada.app/bookmark/", uuidv5.URL);
+import { getBookmark, getBookmarkList } from "./remotestorage";
 
 const isDone = (task) =>
   task["https://szuflada.app/ns/status"] == "https://szuflada.app/ns/done";
 
-export const bookmarks = writable({});
+export const bookmarks = (id: string) => {
+  const bookmark = writable({});
+
+  getBookmark(id)
+    .then((bookmark) =>
+      jsonld.frame(bookmark, {
+        "@context": bookmarkContext,
+        "@embed": "@always",
+      }),
+    )
+    .then((data) => {
+      bookmark.set(data);
+    });
+
+  bookmark.subscribe(() => {
+    document.addEventListener(id, (event) => {
+      getBookmark(id)
+        .then((bookmark) =>
+          jsonld.frame(bookmark, {
+            "@context": bookmarkContext,
+            "@type": "bookmark:Bookmark",
+            "@embed": "@always",
+          }),
+        )
+        .then((data) => {
+          bookmark.set(data);
+        });
+    });
+
+    return (): void => {
+      document.removeEventListener(id, (event) => {
+        getBookmark(id)
+          .then((bookmark) =>
+            jsonld.frame(bookmark, {
+              "@context": bookmarkContext,
+              "@type": "bookmark:Bookmark",
+              "@embed": "@always",
+            }),
+          )
+          .then((data) => {
+            bookmark.set(data);
+          });
+      });
+    };
+  });
+
+  return bookmark;
+};
+
+export const bookmarkList = (() => {
+  const list = writable([]);
+
+  document.addEventListener("urn:szuflada:bookmarks", (event) => {
+    event.detail && event.detail["szuflada:knows"]
+      ? list.set(event.detail["szuflada:knows"].map((item) => item["@id"]))
+      : false;
+  });
+
+  document.addEventListener("bookmark", (event) => {
+    jsonld
+      .frame(event.detail, {
+        "@context": {
+          title: "http://www.w3.org/2002/01/bookmark#title",
+          recalls: "http://www.w3.org/2002/01/bookmark#recalls",
+        },
+        title: {},
+        recalls: {},
+        "@explicit": "@true",
+      })
+      .then((graph) => {
+        if (!graph.recalls) {
+          return;
+        }
+        graph["recalls"] = new URL(graph["recalls"]["@id"]).host;
+        search.add(graph);
+        searchQuery.update((query) => query);
+      });
+  });
+
+  getBookmarkList().then((data) => {
+    data && data["szuflada:knows"]
+      ? list.set(data["szuflada:knows"].map((item) => item["@id"]))
+      : false;
+  });
+
+  return list;
+})();
 
 export const bookmarkProgress = derived(
   bookmarks,
   ($bookmarks) =>
     Object.values($bookmarks).filter((bookmark) => bookmark["@id"]).length /
     Object.values($bookmarks).length,
-);
-
-export const bookmarkList = derived(
-  bookmarks,
-  ($bookmarks, set) => {
-    const t = setTimeout(() => {
-      return set(
-        Object.values($bookmarks).sort((a: any, b: any) =>
-          a.hasOwnProperty("http://purl.org/dc/elements/1.1/#created") &&
-          b.hasOwnProperty("http://purl.org/dc/elements/1.1/#created")
-            ? b["http://purl.org/dc/elements/1.1/#created"].localeCompare(
-                a["http://purl.org/dc/elements/1.1/#created"],
-              )
-            : b.hasOwnProperty("http://purl.org/dc/elements/1.1/#created") -
-              a.hasOwnProperty("http://purl.org/dc/elements/1.1/#created"),
-        ),
-      );
-    }, 100);
-
-    return () => clearTimeout(t);
-  },
-  [],
 );
 
 export const searchQuery = writable("");
@@ -57,9 +120,8 @@ export const bookmarksFiltered = derived(
       .search($searchQuery)
       .map((item) => item.result)
       .flat();
-    return $bookmarkList.filter((bookmark) =>
-      searchResults.includes(bookmark["@id"]),
-    );
+
+    return $bookmarkList.filter((bookmark) => searchResults.includes(bookmark));
   },
 );
 

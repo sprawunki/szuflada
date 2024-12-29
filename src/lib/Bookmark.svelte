@@ -1,76 +1,95 @@
 <script>
   import { base } from "$app/paths";
+  import { writable } from "svelte/store";
   import { default as moment } from "moment";
-  import Lazy from "svelte-lazy";
   import { bookmarks } from "$lib/store";
+  import jsonld from "$lib/jsonld/jsonld";
+  import { bookmarkContext } from "$lib/jsonld/contexts";
 
   export let id;
 
-  let bookmark;
-  let title = "";
-  let url = "";
-  let createdAt = "";
+  const bookmark = writable({});
+  const ogp = writable({});
 
-  $: bookmark = $bookmarks[id];
-  $: title =
-    bookmark && bookmark["http://www.w3.org/2002/01/bookmark#title"]
-      ? Array.isArray(bookmark["http://www.w3.org/2002/01/bookmark#title"])
-        ? bookmark["http://www.w3.org/2002/01/bookmark#title"][0]["@value"]
-        : bookmark["http://www.w3.org/2002/01/bookmark#title"]["@value"]
-      : "...";
-  $: url =
-    bookmark && bookmark["http://www.w3.org/2002/01/bookmark#recalls"]
-      ? new URL(
-          bookmark["http://www.w3.org/2002/01/bookmark#recalls"]["@id"],
-        ).toString()
-      : "...";
-  $: createdAt =
-    bookmark && bookmark["http://purl.org/dc/elements/1.1/#created"]
-      ? bookmark["http://purl.org/dc/elements/1.1/#created"]
-      : null;
+  let bookmarkStore;
+
+  $: bookmarkStore = bookmarks(id);
+
+  $: jsonld
+    .frame($bookmarkStore, {
+      "@context": bookmarkContext,
+      "@type": "bookmark:Bookmark",
+      "@requireAll": "@true",
+    })
+    .then((graph) => bookmark.set(graph));
 </script>
 
-<article class="bookmark">
-  <Lazy height="4lh">
-    <a href={`${base}#${id}`} class:loading={title == "..."}>
-      <h1 class="bookmark__title">
-        {title}
-      </h1>
-    </a>
-    <span class="bookmark__meta">
-      {#if createdAt}
-        <span>created</span>
-        <span title={moment(createdAt).calendar()}
-          >{moment(createdAt).fromNow()}</span
-        >
-      {:else}
-        <span>...</span>
-      {/if}
-    </span>
-    <ul class="bookmark__actions">
-      <li class="action">
-        <a
-          class="action__visit"
-          target="_blank"
-          rel="noreferrer noopener"
-          href={url}
-        >
-          {url}
+<div class="bookmark-wrapper">
+  <article class="bookmark">
+    <div class="title">
+      <h1>
+        <a href={`${base}#${id}`} class:loading={!$bookmark["bookmark:title"]}>
+          {$bookmark["bookmark:title"]}
         </a>
-      </li>
-    </ul>
-  </Lazy>
-</article>
+      </h1>
+    </div>
+
+    <div class="details">
+      <a
+        class="action__visit"
+        class:loading={!(
+          $bookmark["bookmark:recalls"] && $bookmark["bookmark:recalls"]["@id"]
+        )}
+        target="_blank"
+        rel="noreferrer noopener"
+        href={$bookmark["bookmark:recalls"]
+          ? $bookmark["bookmark:recalls"]["@id"]
+          : ""}
+      >
+        {$bookmark["bookmark:recalls"]
+          ? new URL($bookmark["bookmark:recalls"]["@id"]).host
+          : ""}
+      </a>
+
+      <div class:loading={!$bookmark["dc:created"]} class="created">
+        <span title={moment($bookmark["dc:created"]).calendar()}
+          >{moment($bookmark["dc:created"]).fromNow()}</span
+        >
+      </div>
+    </div>
+  </article>
+</div>
 
 <style>
-  .bookmark {
-    padding: 0.5lh;
-    margin: 0.5lh 0;
-    background: var(--slight-shade);
+  h1 {
+    height: 2lh;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .bookmark__actions li {
+  h1 a {
+    width: 100%;
+    display: block;
+  }
+
+  .bookmark-wrapper {
+    position: relative;
+  }
+
+  .bookmark {
+    padding: 0.5lh;
+    margin: 0;
+    background: var(--slight-shade);
+    display: grid;
+    grid-template-columns: [start] min-content [main] auto [end];
+    grid-template-rows: [top] 2lh [bottom] 1lh [end];
+    gap: 0.5lh;
+  }
+
+  .bookmark header {
     display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .bookmark h1 {
@@ -81,43 +100,35 @@
     font-weight: bold;
   }
 
-  .bookmark__meta {
-    margin: 0;
-    padding: 0;
-    color: var(--gray);
+  .details {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+
+  .created {
     font-size: 0.5lh;
-    display: block;
     text-align: right;
   }
 
-  .bookmark__meta dt,
-  .bookmark__meta dd {
-    display: inline;
-    margin: 0;
-    padding: 0;
+  .details a {
+    flex: 1;
   }
 
-  .bookmark__meta dt::after {
-    content: "\020";
+  .loading {
+    background: linear-gradient(
+      to right,
+      var(--delicate-gray),
+      rgba(255, 255, 255, 0) 65%
+    );
+    color: transparent;
   }
 
-  .bookmark__actions {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+  .title {
+    grid-area: 1 / start / span 1 / end;
   }
 
-  .bookmark__actions li {
-    margin: 0;
-    padding: 0;
-  }
-
-  .action {
-    max-width: 100%;
-  }
-
-  .action__visit {
-    font-size: 0.5lh;
-    overflow: hidden;
+  .details {
+    grid-area: 2 / start / span 1 / end;
   }
 </style>

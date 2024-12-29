@@ -1,14 +1,5 @@
 <script lang="ts">
-  import { onMount, onDestroy } from "svelte";
-  import { goto } from "$app/navigation";
-  import { base } from "$app/paths";
   import { connect, disconnect, remoteStorage } from "$lib/remotestorage.ts";
-
-  import { bookmarks, tasks, productProgress, products } from "$lib/store";
-
-  import search from "$lib/search";
-
-  const workers = {};
 
   let remote = remoteStorage.remote;
 
@@ -28,82 +19,6 @@
   const handleDisconnect = () => {
     disconnect();
   };
-
-  onMount(async () => {
-    const IndexWorker = await import("$lib/index.worker?worker");
-    workers.index = new IndexWorker.default();
-
-    workers.index.onmessage = (event) => {
-      if (event.data.hasOwnProperty("progress")) {
-        productProgress.set(event.data.progress);
-      }
-
-      if (event.data.hasOwnProperty("products")) {
-        products.set(
-          Object.fromEntries(
-            (event.data.products["schema:demands"] ?? []).map((item) => [
-              item["@id"],
-              item,
-            ]),
-          ),
-        );
-      }
-    };
-
-    remoteStorage["szuflada.app/bookmark"]
-      .getPrivateClient()
-      .on("change", (event: any) => {
-        if (event.newValue) {
-          search.add({
-            "@id": event.newValue["@id"],
-            title:
-              event.newValue["http://www.w3.org/2002/01/bookmark#title"][
-                "@value"
-              ],
-            recalls:
-              event.newValue["http://www.w3.org/2002/01/bookmark#recalls"][
-                "@id"
-              ],
-          });
-        }
-
-        bookmarks.update((bookmark) => {
-          if (event.oldValue && event.oldValue["@id"]) {
-            delete bookmark[event.oldValue["@id"]];
-          }
-
-          if (event.newValue && event.newValue["@id"]) {
-            bookmark[event.newValue["@id"]] = event.newValue;
-          }
-
-          return bookmark;
-        });
-
-        workers.index.postMessage(event);
-      });
-
-    remoteStorage["szuflada.app/task"]
-      .getPrivateClient()
-      .on("change", (event: any) => {
-        tasks.update((task) => {
-          if (event.oldValue && event.oldValue["@id"]) {
-            delete task[event.oldValue["@id"]];
-          }
-
-          if (event.newValue && event.newValue["@id"]) {
-            task[event.newValue["@id"]] = event.newValue;
-          }
-
-          return task;
-        });
-      });
-  });
-
-  onDestroy(() => {
-    for (const worker in workers) {
-      workers[worker].terminate();
-    }
-  });
 </script>
 
 <div class="remotestorage">

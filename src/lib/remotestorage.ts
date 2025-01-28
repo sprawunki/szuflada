@@ -47,7 +47,7 @@ remoteStorage.on("sync-done", async () => {
     await remoteStorage["szuflada.app/bookmark"].getListing(),
   );
 
-  const bookmarkIndex = (await getBookmarkList())["szuflada:knows"].map(
+  const bookmarkIndex = (await getBookmarkList())["knows"].map(
     (item) => item["@id"],
   );
 

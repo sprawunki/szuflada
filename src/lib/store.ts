@@ -65,8 +65,8 @@ export const bookmarkList = (() => {
   const list = writable([]);
 
   document.addEventListener("urn:szuflada:bookmarks", (event) => {
-    event.detail && event.detail["szuflada:knows"]
-      ? list.set(event.detail["szuflada:knows"].map((item) => item["@id"]))
+    event.detail && event.detail["knows"]
+      ? list.set(event.detail["knows"].map((item) => item["@id"]))
       : false;
   });
 
@@ -92,8 +92,8 @@ export const bookmarkList = (() => {
   });
 
   getBookmarkList().then((data) => {
-    data && data["szuflada:knows"]
-      ? list.set(data["szuflada:knows"].map((item) => item["@id"]))
+    data && data["knows"]
+      ? list.set(data["knows"].map((item) => item["@id"]))
       : false;
   });
 

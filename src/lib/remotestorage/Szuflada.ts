@@ -37,14 +37,14 @@ const Szuflada = {
                 "@context": bookmarkContext,
                 "@graph": {
                   "@id": "urn:szuflada:me",
-                  "szuflada:knows": bookmark,
+                  "knows": bookmark,
                 },
               },
             ],
             {
               "@context": bookmarkContext,
               "@id": "urn:szuflada:me",
-              "szuflada:knows": {
+              "knows": {
                 "dc:created": {},
                 "dc:date": {},
                 "@explicit": "@true",
@@ -55,7 +55,7 @@ const Szuflada = {
             },
           );
 
-          framed["szuflada:knows"] = framed["szuflada:knows"].sort((a, b) =>
+          framed["knows"] = framed["knows"].sort((a, b) =>
             b["dc:created"].localeCompare(a["dc:created"]),
           );
 
@@ -71,7 +71,7 @@ const Szuflada = {
           const framed = await jsonld.frame([bookmarkList], {
             "@context": bookmarkContext,
             "@id": "urn:szuflada:me",
-            "szuflada:knows": {
+            "knows": {
               "dc:created": {},
               "dc:date": {},
               "@explicit": "@true",
@@ -81,7 +81,7 @@ const Szuflada = {
             "@requireAll": "@true",
           });
 
-          framed["szuflada:knows"] = framed["szuflada:knows"].filter(
+          framed["knows"] = framed["knows"].filter(
             (item) => item["@id"] !== uuid,
           );
 

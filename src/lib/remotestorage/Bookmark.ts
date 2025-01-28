@@ -2,6 +2,7 @@ import RemoteStorage from "remotestoragejs";
 import BookmarkSchema from "$lib/remotestorage/schema/Bookmark";
 import { v5 as uuidv5 } from "uuid";
 import * as jsonld from "jsonld";
+import { browser } from "$app/environment";
 
 const Bookmark = {
   name: "szuflada.app/bookmark",
@@ -10,11 +11,11 @@ const Bookmark = {
     privateClient.cache("", "ALL");
 
     privateClient.on("change", (event) => {
-      if (event.path === "conflict") {
-        privateClient.getObject(
-          event.path.replace("/szuflada.app/bookmark/", ""),
-        );
+      if (event.origin === "conflict") {
+        privateClient.getObject(event.relativePath);
       }
+
+      if (!browser) return;
 
       document.dispatchEvent(
         new CustomEvent("bookmark", { detail: event.newValue }),
@@ -29,7 +30,6 @@ const Bookmark = {
 
     return {
       exports: {
-        getPrivateClient: () => privateClient,
         save: (objectData: any) => {
           return privateClient
             .getObject(objectData["@id"])
@@ -85,8 +85,11 @@ const Bookmark = {
               privateClient.getObject(`${objectData["@id"]}`, false),
             );
         },
+
         get: (uuid: string) => privateClient.getObject(uuid, false),
+
         getListing: () => privateClient.getListing("", false),
+
         del: (uuid) => privateClient.remove(uuid),
       },
     };

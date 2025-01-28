@@ -1,26 +1,32 @@
 <script lang="ts">
-  import { cycles } from '$lib/store'
-  import { remoteStorage } from '$lib/remotestorage.ts'
+  import { cycles } from "$lib/store";
+  import { getTask, saveTask } from "$lib/remotestorage.ts";
+  import TaskTitle from "$lib/TaskTitle.svelte";
 
-  const chooseFirst = (firstTask) => {
-    $cycles.forEach(task => {
-      task["https://szuflada.app/ns/before"] = task["https://szuflada.app/ns/before"]
-        .filter(dependency => dependency["@id"] != firstTask["@id"])
+  const chooseFirst = async (firstTask) => {
+    $cycles[0].forEach(async (taskId) => {
+      const task = await getTask(taskId);
 
-      remoteStorage['szuflada.app/task'].save(task)
-    })
-  }
+      task["moreImportantThan"] = task["moreImportantThan"].filter(
+        (dependency) => dependency["@id"] != firstTask["@id"],
+      );
+
+      saveTask(task);
+    });
+  };
 </script>
 
 {#if $cycles.length}
-<div class="cycles">
-  <span>Which is <em>the most important</em>?</span>
-  <ul>
-    {#each $cycles as task}
-      <li on:click={chooseFirst(task)}>{task['https://szuflada.app/ns/summary']}</li>
-    {/each}
-  </ul>
-</div>
+  <div class="cycles">
+    <span>Which is <em>the most important</em>?</span>
+    <ul>
+      {#each $cycles[0] as task}
+        <li on:click={chooseFirst(task)}>
+          <TaskTitle id={task} />
+        </li>
+      {/each}
+    </ul>
+  </div>
 {/if}
 
 <style>
@@ -38,5 +44,6 @@
   .cycles li {
     margin: 0.25em 0;
     padding: 0.25em 0;
+    cursor: pointer;
   }
 </style>

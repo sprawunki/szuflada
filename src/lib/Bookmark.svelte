@@ -61,6 +61,10 @@
 </div>
 
 <style>
+  small {
+    white-space: nowrap;
+  }
+
   h1 {
     height: 2lh;
     overflow: hidden;

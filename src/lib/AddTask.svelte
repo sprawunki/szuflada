@@ -1,19 +1,17 @@
 <script lang="ts">
   import { v4 as uuidv4 } from "uuid";
-  import { remoteStorage } from "$lib/remotestorage.ts";
+  import { saveTask } from "$lib/remotestorage.ts";
 
   let newTaskInput;
   let summary;
 
   const addTask = (summary) => {
-    remoteStorage["szuflada.app/task"].save({
+    saveTask({
       "@id": uuidv4(),
       "@type": "szuflada.app/Task",
-      "http://purl.org/dc/elements/1.1/#created": new Date().toISOString(),
-      "http://purl.org/dc/elements/1.1/#date": new Date().toISOString(),
-      "https://szuflada.app/ns/summary": summary,
-      "https://szuflada.app/ns/before": [],
-      "https://szuflada.app/ns/after": [],
+      "dc:created": new Date().toISOString(),
+      "dc:date": new Date().toISOString(),
+      summary: summary,
     });
 
     newTaskInput.value = "";

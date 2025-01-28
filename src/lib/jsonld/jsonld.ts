@@ -1,17 +1,27 @@
 import jsonld from "jsonld";
-import { bookmarkContext } from "$lib/jsonld/contexts";
+import {
+  metaContext,
+  bookmarkContext,
+  taskContext,
+} from "$lib/jsonld/contexts";
 
 const nodeDocumentLoader = jsonld.documentLoaders.xhr;
 
 const CONTEXTS = {
   "http://remotestorage.io/spec/modules/szuflada.app/meta": {
-    "@context": bookmarkContext,
+    "@context": metaContext,
   },
   "http://remotestorage.io/spec/modules/szuflada.app/Bookmark": {
     "@context": bookmarkContext,
   },
   "http://remotestorage.io/spec/modules/szuflada.app/Graph": {
     "@context": bookmarkContext,
+  },
+  "http://remotestorage.io/spec/modules/szuflada.app/Task": {
+    "@context": taskContext,
+  },
+  "http://remotestorage.io/spec/modules/szuflada.app/TaskIndex": {
+    "@context": taskContext,
   },
 };
 

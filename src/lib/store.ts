@@ -1,13 +1,21 @@
 import { default as moment } from "moment";
 import { writable, derived } from "svelte/store";
+import { browser } from "$app/environment";
 import graphlib from "@dagrejs/graphlib";
 const { Graph, alg } = graphlib;
 
 import jsonld from "$lib/jsonld/jsonld";
-import { bookmarkContext } from "$lib/jsonld/contexts";
+import { bookmarkContext, taskContext } from "$lib/jsonld/contexts";
 
 import search from "$lib/search";
-import { getBookmark, getBookmarkList } from "./remotestorage";
+import {
+  getBookmark,
+  getBookmarkList,
+  getTask,
+  getTaskList,
+} from "./remotestorage";
+
+export const searchQuery = writable("");
 
 const isDone = (task) =>
   task["https://szuflada.app/ns/status"] == "https://szuflada.app/ns/done";
@@ -27,8 +35,11 @@ export const bookmarks = (id: string) => {
     });
 
   bookmark.subscribe(() => {
-    document.addEventListener(id, (event) => {
-      getBookmark(id)
+    if (!browser) {
+      return;
+    }
+    const updateBookmark = (event) =>
+      getBookmark(event.type)
         .then((bookmark) =>
           jsonld.frame(bookmark, {
             "@context": bookmarkContext,
@@ -39,75 +50,64 @@ export const bookmarks = (id: string) => {
         .then((data) => {
           bookmark.set(data);
         });
-    });
+
+    document.addEventListener(id, updateBookmark, false);
 
     return (): void => {
-      document.removeEventListener(id, (event) => {
-        getBookmark(id)
-          .then((bookmark) =>
-            jsonld.frame(bookmark, {
-              "@context": bookmarkContext,
-              "@type": "bookmark:Bookmark",
-              "@embed": "@always",
-            }),
-          )
-          .then((data) => {
-            bookmark.set(data);
-          });
-      });
+      document.removeEventListener(id, updateBookmark, false);
     };
   });
 
   return bookmark;
 };
 
+const updateSearch = (event) =>
+  jsonld
+    .frame(event.detail, {
+      "@context": {
+        title: "http://www.w3.org/2002/01/bookmark#title",
+        recalls: "http://www.w3.org/2002/01/bookmark#recalls",
+      },
+      title: {},
+      recalls: {},
+      "@explicit": "@true",
+    })
+    .then((graph) => {
+      if (!graph.recalls) {
+        return;
+      }
+      graph["recalls"] = new URL(graph["recalls"]["@id"]).host;
+      search.add(graph);
+      searchQuery.update((query) => query);
+    });
+
 export const bookmarkList = (() => {
   const list = writable([]);
 
-  document.addEventListener("urn:szuflada:bookmarks", (event) => {
+  const updateList = (event) => {
     event.detail && event.detail["knows"]
       ? list.set(event.detail["knows"].map((item) => item["@id"]))
       : false;
+  };
+
+  list.subscribe(() => {
+    if (!browser) {
+      return;
+    }
+
+    document.addEventListener("bookmark", updateSearch, false);
+    document.addEventListener("urn:szuflada:bookmarks", updateList, false);
+
+    return () => {
+      document.removeEventListener("bookmark", updateSearch, false);
+      document.removeEventListener("urn:szuflada:bookmarks", updateList, false);
+    };
   });
 
-  document.addEventListener("bookmark", (event) => {
-    jsonld
-      .frame(event.detail, {
-        "@context": {
-          title: "http://www.w3.org/2002/01/bookmark#title",
-          recalls: "http://www.w3.org/2002/01/bookmark#recalls",
-        },
-        title: {},
-        recalls: {},
-        "@explicit": "@true",
-      })
-      .then((graph) => {
-        if (!graph.recalls) {
-          return;
-        }
-        graph["recalls"] = new URL(graph["recalls"]["@id"]).host;
-        search.add(graph);
-        searchQuery.update((query) => query);
-      });
-  });
-
-  getBookmarkList().then((data) => {
-    data && data["knows"]
-      ? list.set(data["knows"].map((item) => item["@id"]))
-      : false;
-  });
+  getBookmarkList().then((graph) => updateList({ detail: graph }));
 
   return list;
 })();
-
-export const bookmarkProgress = derived(
-  bookmarks,
-  ($bookmarks) =>
-    Object.values($bookmarks).filter((bookmark) => bookmark["@id"]).length /
-    Object.values($bookmarks).length,
-);
-
-export const searchQuery = writable("");
 
 export const bookmarksFiltered = derived(
   [bookmarkList, searchQuery],
@@ -125,152 +125,144 @@ export const bookmarksFiltered = derived(
   },
 );
 
-export const products = writable({});
+export const tasks = (id: string) => {
+  const task = writable({});
 
-export const productProgress = writable(0);
+  getTask(id)
+    .then((task) =>
+      jsonld.frame(task, {
+        "@context": taskContext,
+        "@embed": "@always",
+      }),
+    )
+    .then((data) => {
+      task.set(data);
+    });
 
-export const productList = derived(products, ($products) =>
-  Object.values($products)
-    .filter((product) => product["@id"])
-    .sort((a, b) => a["@id"].localeCompare(b["@id"])),
-);
+  return task;
+};
 
-export const tasks = writable({});
+export const taskList = (() => {
+  const list = writable([]);
 
-export const taskProgress = derived(
-  tasks,
-  ($tasks) =>
-    Object.values($tasks).filter((task) => task["@id"]).length /
-    Object.values($tasks).length,
-);
+  const updateList = (event) => {
+    event.detail && event.detail["hasTask"]
+      ? list.set(event.detail["hasTask"])
+      : false;
+  };
 
-export const taskList = derived(tasks, ($tasks) => {
-  const tasks = Object.values($tasks).filter((task) => task["@id"]);
+  list.subscribe(() => {
+    if (!browser) {
+      return;
+    }
 
+    document.addEventListener("urn:szuflada:tasks", updateList, false);
+
+    return () => {
+      document.removeEventListener("urn:szuflada:tasks", updateList, false);
+    };
+  });
+
+  getTaskList().then((graph) => updateList({ detail: graph }));
+
+  return list;
+})();
+
+export const taskGraphComponents = derived(taskList, ($tasks) => {
   const graph = new Graph();
 
-  tasks.forEach((task) => {
-    graph.setNode(task["@id"]);
-  });
-
-  tasks.forEach((task) => {
-    task["https://szuflada.app/ns/before"].forEach((before) => {
-      graph.setEdge(task["@id"], before["@id"]);
+  $tasks
+    .filter((task) => !["#done", "#Done"].includes(task["status"]))
+    .forEach((task) => {
+      graph.setNode(task["@id"]);
     });
 
-    task["https://szuflada.app/ns/after"].forEach((after) => {
-      graph.setEdge(after["@id"], task["@id"]);
+  $tasks
+    .filter((task) => !["#done", "#Done"].includes(task["status"]))
+    .forEach((task) => {
+      (task["moreImportantThan"] ?? [])
+        .filter((node) => graph.nodes().includes(node))
+        .forEach((before) => {
+          graph.setEdge(task["@id"], before);
+        });
+
+      (task["lessImportantThan"] ?? [])
+        .filter((node) => graph.nodes().includes(node))
+        .forEach((after) => {
+          graph.setEdge(after, task["@id"]);
+        });
     });
-  });
 
-  const now = new Date();
-
-  if (!alg.isAcyclic(graph)) {
-    return [];
+  while (
+    graph.sources().length < 2 &&
+    graph.nodes().length > 1 &&
+    alg.isAcyclic(graph)
+  ) {
+    graph.removeNode(alg.topsort(graph)[0]);
   }
 
-  const importanceOrder = alg.topsort(graph);
-
-  const deadlineOrder = tasks
-    .sort(
-      (a, b) =>
-        importanceOrder.indexOf(a["@id"]) - importanceOrder.indexOf(b["@id"]),
-    )
-    .sort((a, b) => {
-      const deadlineA = a["https://szuflada.app/ns/deadline"]
-        ? new Date(a["https://szuflada.app/ns/deadline"])
-        : Infinity;
-      const deadlineB = b["https://szuflada.app/ns/deadline"]
-        ? new Date(b["https://szuflada.app/ns/deadline"])
-        : Infinity;
-
-      return deadlineA - deadlineB;
-    })
-    .map((item) => item["@id"]);
-  const scheduledOrder = tasks
-    .sort(
-      (a, b) =>
-        importanceOrder.indexOf(a["@id"]) - importanceOrder.indexOf(b["@id"]),
-    )
-    .sort((a, b) => {
-      const scheduledA = a["https://szuflada.app/ns/scheduled"]
-        ? new Date(a["https://szuflada.app/ns/scheduled"])
-        : now;
-      const scheduledB = b["https://szuflada.app/ns/scheduled"]
-        ? new Date(b["https://szuflada.app/ns/scheduled"])
-        : now;
-
-      return scheduledA - scheduledB;
-    })
-    .map((item) => item["@id"]);
-
-  const links = graph.edges();
-
-  const defaultDeadline = moment().add(10, "days");
-
-  return tasks
-    .map((task) => {
-      task.done =
-        task["https://szuflada.app/ns/status"] ==
-        "https://szuflada.app/ns/done";
-      task.blocked = links.some(
-        (link) => task["@id"] == link.w && !isDone($tasks[link.v]),
-      );
-
-      return task;
-    })
-    .sort((a, b) => {
-      const importanceA = importanceOrder.indexOf(a["@id"]);
-      const importanceB = importanceOrder.indexOf(b["@id"]);
-
-      const scheduledA = scheduledOrder.indexOf(a["@id"]);
-      const scheduledB = scheduledOrder.indexOf(b["@id"]);
-
-      const deadlineA = deadlineOrder.indexOf(a["@id"]);
-      const deadlineB = deadlineOrder.indexOf(b["@id"]);
-
-      const weightA = Math.sqrt(
-        scheduledA * scheduledA +
-          deadlineA * deadlineA +
-          importanceA * importanceA,
-      );
-      const weightB = Math.sqrt(
-        scheduledB * scheduledB +
-          deadlineB * deadlineB +
-          importanceB * importanceB,
-      );
-
-      return weightA - weightB;
-    })
-    .sort((a, b) => a.done - b.done);
+  return graph.sources();
 });
 
-export const firstUnblockedTask = derived(taskList, ($taskList) =>
-  [...$taskList].find((task) => !isDone(task) && !task.blocked),
-);
-
-export const taskToComparePriorityTo = derived(taskList, ($taskList) => {
-  const toDo = [...$taskList].filter((task) => !isDone(task) && !task.blocked);
-
-  return toDo[parseInt(toDo.length / 2)];
-});
-
-export const cycles = derived(tasks, ($tasks) => {
-  const tasks = Object.values($tasks).filter((task) => task["@id"]);
-
+const tasksByImportance = derived(taskList, ($tasks) => {
   const graph = new Graph();
 
-  tasks.forEach((task) => {
+  $tasks
+    .filter((task) => !["#done", "#Done"].includes(task["status"]))
+    .forEach((task) => {
+      graph.setNode(task["@id"]);
+    });
+
+  $tasks
+    .filter((task) => !["#done", "#Done"].includes(task["status"]))
+    .forEach((task) => {
+      (task["moreImportantThan"] ?? []).forEach((before) => {
+        graph.setEdge(task["@id"], before);
+      });
+
+      (task["lessImportantThan"] ?? []).forEach((after) => {
+        graph.setEdge(after, task["@id"]);
+      });
+    });
+
+  if (!alg.isAcyclic(graph)) {
+    return $tasks.map((item) => item["@id"]);
+  }
+
+  return alg.topsort(graph);
+});
+
+export const tasksSorted = derived([taskList, tasksByImportance], ($tasks) => {
+  const now = new Date();
+
+  return $tasks[0].sort(
+    (a, b) =>
+      (b["status"].toLowerCase() !== "#done") -
+        (a["status"].toLowerCase() !== "#done") ||
+      !!b["deadline"] - !!a["deadline"] ||
+      (a["deadline"] ? +new Date(a["deadline"]) : 0) -
+        (b["deadline"] ? +new Date(b["deadline"]) : 0) ||
+      (a["scheduled"] ? new Date(a["scheduled"]) : now) -
+        (b["scheduled"] ? new Date(b["scheduled"]) : now) ||
+      $tasks[1].indexOf(a["@id"]) - $tasks[1].indexOf(b["@id"]) ||
+      new Date(a["dc:created"]) - new Date(b["dc:created"]),
+  );
+});
+
+export const cycles = derived(taskList, ($tasks) => {
+  const graph = new Graph();
+
+  $tasks.forEach((task) => {
     graph.setNode(task["@id"]);
   });
 
-  tasks.forEach((task) => {
-    task["https://szuflada.app/ns/before"].forEach((before) => {
-      graph.setEdge(task["@id"], before["@id"]);
+  $tasks.forEach((task) => {
+    (task["moreImportantThan"] ?? []).forEach((before) => {
+      graph.setEdge(task["@id"], before);
     });
 
-    task["https://szuflada.app/ns/after"].forEach((after) => {
-      graph.setEdge(after["@id"], task["@id"]);
+    (task["lessImportantThan"] ?? []).forEach((after) => {
+      graph.setEdge(after, task["@id"]);
     });
   });
 
@@ -278,7 +270,5 @@ export const cycles = derived(tasks, ($tasks) => {
     return [];
   }
 
-  const cycle = alg.findCycles(graph)[0];
-
-  return tasks.filter((task) => cycle.includes(task["@id"]));
+  return alg.findCycles(graph).sort((a, b) => a.length - b.length);
 });

@@ -1,61 +1,33 @@
 <script lang="ts">
-  import { default as moment } from "moment";
-
+  import { tasksSorted } from "$lib/store";
   import CompareTasks from "$lib/CompareTasks.svelte";
+  import TaskSummary from "$lib/TaskSummary.svelte";
   import Cycles from "$lib/Cycles.svelte";
-  import Progress from "$lib/Progress.svelte";
-
-  import { tasks, taskList, taskProgress } from "$lib/store";
-  import { remoteStorage } from "$lib/remotestorage.ts";
-
-  const toggleStatus = (task) => {
-    if (
-      task["https://szuflada.app/ns/status"] ==
-        "https://szuflada.app/ns/todo" ||
-      !task["https://szuflada.app/ns/status"]
-    ) {
-      task["https://szuflada.app/ns/status"] = "https://szuflada.app/ns/done";
-    } else {
-      task["https://szuflada.app/ns/status"] = "https://szuflada.app/ns/todo";
-    }
-
-    remoteStorage["szuflada.app/task"].save(task);
-  };
 </script>
 
 <div class="tasks">
   <header>
     <h1>
-      Tasks ({$taskList.filter((task) => !task.done).length}/{$taskList.length})
+      Tasks ({$tasksSorted.filter((task) => !task.done)
+        .length}/{$tasksSorted.length})
     </h1>
 
-    <Progress progress={$taskProgress} />
     <CompareTasks />
     <Cycles />
   </header>
 
-  <ul class="tasklist">
-    {#each $taskList as task}
-      <li class="task" id={task["@id"]} class:done={task.done}>
-        <div class="task__title" class:blocked={task.blocked}>
-          <label>
-            <input
-              type="checkbox"
-              on:change={toggleStatus(task)}
-              checked={$tasks[task["@id"]].done}
-            />
-            <span>{task["https://szuflada.app/ns/summary"]}</span>
-            {#if task["https://szuflada.app/ns/deadline"]}
-              <small
-                >{moment(
-                  task["https://szuflada.app/ns/deadline"],
-                ).fromNow()}</small
-              >
-            {/if}
-          </label>
-        </div>
-      </li>
-    {/each}
+  <ul>
+    {#if false}
+      <pre><code>{JSON.stringify($tasksSorted, null, 2)}</code></pre>
+    {/if}
+
+    {#if true}
+      {#each $tasksSorted as taskId}
+        <li id={taskId["@id"]}>
+          <TaskSummary id={taskId["@id"]} />
+        </li>
+      {/each}
+    {/if}
   </ul>
 </div>
 

@@ -1,27 +1,57 @@
 <script lang="ts">
-  import { tasks, taskList, firstUnblockedTask, taskToComparePriorityTo } from '$lib/store'
-  import { default as moment } from 'moment'
+  import { tasks, taskGraphComponents } from "$lib/store";
+  import { taskFrame } from "$lib/jsonld/frames";
+  import jsonld from "$lib/jsonld/jsonld";
+  import { writable } from "svelte/store";
+  import { saveTask } from "$lib/remotestorage";
 
-  import { remoteStorage } from '$lib/remotestorage.ts'
+  const taskA = writable({});
+  const taskB = writable({});
 
-  const setOrder = (first, next) => {
-    first["https://szuflada.app/ns/before"].push(
-      { "@id": next["@id"] }
-    )
+  let taskAStore;
+  let taskBStore;
 
-    remoteStorage['szuflada.app/task'].save(first)
-  }
+  $: taskAStore = $taskGraphComponents[0]
+    ? tasks($taskGraphComponents[0])
+    : writable({});
+
+  $: taskBStore = $taskGraphComponents[1]
+    ? tasks($taskGraphComponents[1])
+    : writable({});
+
+  $: jsonld.frame($taskAStore, taskFrame).then((task) => taskA.set(task));
+  $: jsonld.frame($taskBStore, taskFrame).then((task) => taskB.set(task));
+
+  const addPriorityOver = async (moreImportant, lessImportant) => {
+    moreImportant["moreImportantThan"].push(lessImportant["@id"]);
+
+    moreImportant["dc:date"] = new Date().toISOString();
+    const result = await jsonld.frame(moreImportant, taskFrame);
+
+    await saveTask(result);
+  };
 </script>
 
-{#if $firstUnblockedTask && $taskToComparePriorityTo && $firstUnblockedTask["@id"] != $taskToComparePriorityTo["@id"]}
-<div class="compare-tasks">
-  <span>Which is <em>more important</em>?</span>
-  <ul class="choice">
-    <li><a href="#" on:click|preventDefault={setOrder($firstUnblockedTask, $taskToComparePriorityTo)}>{$firstUnblockedTask["https://szuflada.app/ns/summary"]}</a></li>
-    <li><a href="#" on:click|preventDefault={setOrder($taskToComparePriorityTo, $firstUnblockedTask)}>{$taskToComparePriorityTo["https://szuflada.app/ns/summary"]}</a></li>
-    <!-- <li><a href="#">Doesn't matter</a></li> -->
-  </ul>
-</div>
+{#if $taskGraphComponents.length > 1 && $taskA["summary"] && $taskB["summary"]}
+  <div class="compare-tasks">
+    <h2>Which is <em>more important</em>?</h2>
+
+    <div class="choice">
+      <button
+        on:click={addPriorityOver($taskA, $taskB)}
+        data-task-id={$taskA["@id"]}
+      >
+        {$taskA["summary"]}
+      </button>
+      <span>or</span>
+      <button
+        on:click={addPriorityOver($taskB, $taskA)}
+        data-task-id={$taskB["@id"]}
+      >
+        {$taskB["summary"]}
+      </button>
+    </div>
+  </div>
 {/if}
 
 <style>
@@ -29,66 +59,24 @@
     background-color: #077;
     color: #fff;
     margin: 0;
-    padding: 0.5rem;
+    padding: 0.5lh;
     text-align: center;
-    position: sticky;
-    top: 0.5rem;
   }
-  .compare-tasks a {
-    color: inherit;
-  }
-  .compare-tasks .choice {
+
+  .choice {
     display: flex;
     flex-wrap: wrap;
-    flex-direction: row;
-    margin: 0;
-    padding: 0;
-    text-align: center;
-  }
-  .compare-tasks .choice li {
-    min-width: 40%;
-    flex: 1;
-    list-style: none;
-    display: flex;
-    margin: 0.5rem;
-    padding: 0 1em;
-    box-sizing: border-box;
-    position: relative;
-    justify-content: center;
+    width: 100%;
+    justify-content: space-between;
     align-items: center;
   }
-  .compare-tasks .choice a {
-    position: relative;
-    flex-grow: 0;
-    flex-shrink: 1;
+
+  .compare-tasks button {
+    border: none;
     display: block;
+    flex: 1;
+    margin: 0.5lh;
+    padding: 0.5lh;
+    cursor: pointer;
   }
-  .compare-tasks .choice li:last-child {
-    flex-grow: 1;
-    width: 100%;
-  }
-  .compare-tasks .choice li:nth-child(2n) a::before {
-    content: '👉';
-    display: block;
-    position: absolute;
-    right: 100%;
-    top: 50%;
-    transform: translate(-0.2em, -50%);
-  }
-  .compare-tasks .choice li:nth-child(2n+1) a::after {
-    content: '👈';
-    display: block;
-    position: absolute;
-    left: 100%;
-    top: 50%;
-    transform: translate(0.2em, -50%);
-  }
-  /* .compare-tasks .choice li:last-child a::before {
-    content: '🤷';
-    position: static;
-    margin: 0 0.2em 0 0;
-  }
-  .compare-tasks .choice li:last-child a::after {
-    content: '';
-  } */
 </style>

@@ -22,7 +22,7 @@
     text = $page.url.searchParams.get("text");
     url = $page.url.searchParams.get("url");
 
-    const { remoteStorage } = await import("$lib/remotestorage");
+    const { saveBookmark } = await import("$lib/remotestorage");
     const getUrlFromCandidate = (candidate: string) => {
       try {
         return new URL(candidate).toString();
@@ -35,26 +35,24 @@
 
     if (finalUrl) {
       console.log("SAVING", finalUrl);
-      remoteStorage["szuflada.app/bookmark"]
-        .save({
-          "@id": `urn:uuid:${uuidv5(finalUrl, NS_BOOKMARK)}`,
-          "@type": "http://www.w3.org/2002/01/bookmark#Bookmark",
-          "http://purl.org/dc/elements/1.1/#created": new Date().toISOString(),
-          "http://purl.org/dc/elements/1.1/#date": new Date().toISOString(),
-          "http://www.w3.org/2002/01/bookmark#title": [
-            {
-              "@value": title,
-            },
-          ],
-          "http://www.w3.org/2002/01/bookmark#recalls": {
-            "@id": finalUrl,
+      saveBookmark({
+        "@id": `urn:uuid:${uuidv5(finalUrl, NS_BOOKMARK)}`,
+        "@type": "http://www.w3.org/2002/01/bookmark#Bookmark",
+        "http://purl.org/dc/elements/1.1/#created": new Date().toISOString(),
+        "http://purl.org/dc/elements/1.1/#date": new Date().toISOString(),
+        "http://www.w3.org/2002/01/bookmark#title": [
+          {
+            "@value": title,
           },
-        })
-        .then(() => {
-          goto(`${base}/#urn:uuid:${uuidv5(finalUrl, NS_BOOKMARK)}`, {
-            replaceState: true,
-          });
+        ],
+        "http://www.w3.org/2002/01/bookmark#recalls": {
+          "@id": finalUrl,
+        },
+      }).then(() => {
+        goto(`${base}/#urn:uuid:${uuidv5(finalUrl, NS_BOOKMARK)}`, {
+          replaceState: true,
         });
+      });
     }
   });
 </script>

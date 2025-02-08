@@ -8,9 +8,6 @@
       <a href="{base}/">Bookmarks</a>
     </li>
     <li>
-      <a href="{base}/products/">Products</a>
-    </li>
-    <li>
       <a href="{base}/tasks/">Tasks</a>
     </li>
   </ul>

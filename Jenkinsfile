@@ -33,6 +33,10 @@ pipeline {
         }
       }
 
+      environment {
+        GIT_REPO_NAME = "${GIT_URL}".replaceFirst(/^.*?(?::\/\/.*?\/|:)(.*?)(\.git)?$/, '$1')
+      }
+
       steps {
         container('kaniko') {
           sh """
@@ -40,7 +44,7 @@ pipeline {
               -f `pwd`/Dockerfile \
               -c `pwd` \
               --cache=true \
-              --destination=harbor.k8s.lan/sprawunki/szuflada:\${GIT_COMMIT:0:7} \
+              --destination=harbor.k8s.lan/${GIT_REPO_NAME}:\${GIT_COMMIT:0:7} \
               --skip-tls-verify
           """
         } // container 'kaniko'
@@ -107,7 +111,7 @@ pipeline {
           'Code-Review': 0,
           'Verified': 1
         ],
-	message: "${env.BUILD_URL}"
+        message: "${env.BUILD_URL}"
     }
 
     unstable {
@@ -116,7 +120,7 @@ pipeline {
           'Code-Review': -1,
           'Verified': 0
         ],
-	message: "${env.BUILD_URL}"
+        message: "${env.BUILD_URL}"
     }
 
     failure {
@@ -125,7 +129,7 @@ pipeline {
           'Code-Review': -1,
           'Verified': -1
         ],
-	message: "${env.BUILD_URL}"
+        message: "${env.BUILD_URL}"
     }
   }
 }
